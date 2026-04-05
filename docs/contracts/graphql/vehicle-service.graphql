@@ -1,0 +1,33 @@
+type Vehicle {
+  id: ID!
+  immatriculation: String!
+  marque: String!
+  modele: String!
+  annee: Int
+  statut: VehicleStatus!
+  kilometrage: Int!
+}
+
+enum VehicleStatus {
+  DISPONIBLE
+  RESERVE
+  EN_MISSION
+  MAINTENANCE
+}
+
+input VehicleInput {
+  immatriculation: String!
+  marque: String!
+  modele: String!
+  annee: Int
+}
+
+type Query {
+  allVehicles: [Vehicle!]!
+  vehicleById(id: ID!): Vehicle
+}
+
+type Mutation {
+  addVehicle(input: VehicleInput!): Vehicle!
+  updateStatus(id: ID!, statut: VehicleStatus!): Vehicle!
+}

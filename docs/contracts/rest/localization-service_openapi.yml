@@ -1,0 +1,22 @@
+openapi: 3.0.3
+info:
+  title: API Service Localisation
+  version: 1.0.0
+paths:
+  /positions/{vehiculeId}:
+    get:
+      summary: Dernière position d'un véhicule
+      parameters:
+        - name: vehiculeId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+components:
+  schemas:
+    Position:
+      type: object
+      properties:
+        latitude: { type: number }
+        longitude: { type: number }
+        vitesse: { type: number }
+        horodatage: { type: string, format: date-time }

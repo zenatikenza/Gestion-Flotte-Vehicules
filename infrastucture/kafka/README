@@ -1,0 +1,15 @@
+Utiliser le script
+1-Rendre le script exécutable :
+chmod +x infrastructure/kafka/create_topics.sh
+2-Exécuter le script :
+./infrastructure/kafka/create_topics.sh
+Méthode 2 : manuelle 
+# Créer les topics
+kafka-topics.sh --create --topic vehicle-events --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+kafka-topics.sh --create --topic driver-events --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+kafka-topics.sh --create --topic maintenance-alerts --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+kafka-topics.sh --create --topic location-updates --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+kafka-topics.sh --create --topic system-notifications --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+ Vérification des topic 
+ kafka-topics.sh --list --bootstrap-server localhost:9092
+ 

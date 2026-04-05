@@ -1,0 +1,29 @@
+services:
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_PASSWORD=admin_password
+    ports:
+      - "5432:5432"
+
+  # --- MICROSERVICES (Version "Placeholder" pour test) ---
+  vehicle-service:
+    image: nginx:alpine # Image très légère pour simuler le service
+    ports: ["8081:80"]
+
+  conductor-service:
+    image: nginx:alpine
+    ports: ["8082:80"]
+
+  maintenance-service:
+    image: nginx:alpine
+    ports: ["8083:80"]
+
+  localization-service:
+    image: nginx:alpine
+    ports: ["8084:80"]
+
+  event-service:
+    image: nginx:alpine
+    ports: ["8085:80"]

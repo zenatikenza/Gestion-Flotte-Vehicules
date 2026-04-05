@@ -1,0 +1,28 @@
+openapi: 3.0.3
+info:
+  title: API Service Véhicules
+  version: 1.0.0
+paths:
+  /vehicules:
+    get:
+      summary: Liste tous les véhicules
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vehicule'
+components:
+  schemas:
+    Vehicule:
+      type: object
+      properties:
+        id_vehicule: { type: string, format: uuid }
+        immatriculation: { type: string }
+        marque: { type: string }
+        modele: { type: string }
+        statut: { type: string, enum: [DISPONIBLE, RESERVE, EN_MISSION, MAINTENANCE] }
+        kilometrage: { type: integer }

@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vehicle-deployment
+  namespace: fleet-management
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: vehicle
+  template:
+    metadata:
+      labels:
+        app: vehicle
+    spec:
+      containers:
+      - name: vehicle-container
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vehicle-service
+  namespace: fleet-management
+spec:
+  selector:
+    app: vehicle
+  ports:
+    - protocol: TCP
+      port: 8081
+      targetPort: 80
+  type: NodePort

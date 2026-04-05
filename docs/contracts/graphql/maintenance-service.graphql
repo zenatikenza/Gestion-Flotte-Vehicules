@@ -1,0 +1,29 @@
+type Intervention {
+  id: ID!
+  vehiculeId: ID!
+  vehiculeImmat: String!
+  technicienId: String!
+  type: String!
+  datePlanifiee: String!
+  dateRealisation: String
+  statut: String!
+  cout: Float
+}
+
+input InterventionInput {
+  vehiculeId: ID!
+  vehiculeImmat: String!
+  technicienId: String!
+  type: String!
+  datePlanifiee: String!
+}
+
+type Query {
+  allInterventions: [Intervention!]!
+  interventionsByVehicle(vehiculeId: ID!): [Intervention!]!
+}
+
+type Mutation {
+  scheduleIntervention(input: InterventionInput!): Intervention!
+  completeIntervention(id: ID!, cout: Float!): Intervention!
+}

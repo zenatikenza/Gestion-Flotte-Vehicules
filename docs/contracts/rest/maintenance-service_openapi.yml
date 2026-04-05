@@ -1,0 +1,20 @@
+openapi: 3.0.3
+info:
+  title: API Service Maintenance
+  version: 1.0.0
+paths:
+  /interventions:
+    get:
+      summary: Historique des maintenances
+    post:
+      summary: Planifier une intervention
+components:
+  schemas:
+    Intervention:
+      type: object
+      properties:
+        id_intervention: { type: string, format: uuid }
+        vehicule_id: { type: string, format: uuid }
+        type: { type: string }
+        date_planifiee: { type: string, format: date-time }
+        statut: { type: string }

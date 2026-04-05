@@ -1,0 +1,24 @@
+openapi: 3.0.3
+info:
+  title: API Service Conducteurs
+  version: 1.0.0
+paths:
+  /conducteurs:
+    get:
+      summary: Liste des chauffeurs
+      responses:
+        '200':
+          description: Succès
+    post:
+      summary: Créer un conducteur
+components:
+  schemas:
+    Conducteur:
+      type: object
+      properties:
+        id_conducteur: { type: string, format: uuid }
+        keycloak_user_id: { type: string }
+        nom: { type: string }
+        prenom: { type: string }
+        numero_permis: { type: string }
+        actif: { type: boolean }
