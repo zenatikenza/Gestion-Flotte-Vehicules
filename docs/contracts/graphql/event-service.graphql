@@ -1,0 +1,26 @@
+type Event {
+  id: ID!
+  vehiculeId: ID!
+  sourceService: String!
+  typeAlerte: String!
+  severite: Severite!
+  acquitte: Boolean!
+  horodatage: String!
+}
+
+enum Severite {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+type Query {
+  allEvents: [Event!]!
+  unacknowledgedEvents: [Event!]!
+  eventsByVehicle(vehiculeId: ID!): [Event!]!
+}
+
+type Mutation {
+  acknowledgeEvent(id: ID!): Event!
+  createEvent(vehiculeId: ID!, source: String!, type: String!, severite: Severite!): Event!
+}

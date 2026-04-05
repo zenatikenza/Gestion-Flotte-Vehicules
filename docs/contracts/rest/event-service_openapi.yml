@@ -1,0 +1,25 @@
+openapi: 3.0.3
+info:
+  title: API Service Événements
+  version: 1.0.0
+paths:
+  /events:
+    get:
+      summary: Liste des alertes système
+      responses:
+        '200':
+          description: Liste des événements
+  /events/{id}/acknowledge:
+    patch:
+      summary: Marquer une alerte comme lue
+components:
+  schemas:
+    Event:
+      type: object
+      properties:
+        id_evenement: { type: string, format: uuid }
+        vehicule_id: { type: string, format: uuid }
+        source_service: { type: string }
+        type_alerte: { type: string }
+        severite: { type: string, enum: [INFO, WARNING, CRITICAL] }
+        acquitte: { type: boolean }

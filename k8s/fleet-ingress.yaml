@@ -1,0 +1,48 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fleet-ingress
+  namespace: fleet-management
+  annotations:
+    # Indispensable pour que /vehicle pointe vers la racine / du pod
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - path: /vehicle
+        pathType: Prefix
+        backend:
+          service:
+            name: vehicle-service
+            port:
+              number: 8081
+      - path: /conductor
+        pathType: Prefix
+        backend:
+          service:
+            name: conductor-service
+            port:
+              number: 8082
+      - path: /maintenance
+        pathType: Prefix
+        backend:
+          service:
+            name: maintenance-service
+            port:
+              number: 8083
+      - path: /localization
+        pathType: Prefix
+        backend:
+          service:
+            name: localization-service
+            port:
+              number: 8084
+      - path: /event
+        pathType: Prefix
+        backend:
+          service:
+            name: event-service
+            port:
+              number: 8085

@@ -1,0 +1,29 @@
+type Conductor {
+  id: ID!
+  keycloakUserId: String!
+  nom: String!
+  prenom: String!
+  numeroPermis: String!
+  categories: [String!]!
+  dateValiditePermis: String!
+  actif: Boolean!
+}
+
+input ConductorInput {
+  keycloakUserId: String!
+  nom: String!
+  prenom: String!
+  numeroPermis: String!
+  categories: [String!]!
+  dateValiditePermis: String!
+}
+
+type Query {
+  allConductors: [Conductor!]!
+  conductorById(id: ID!): Conductor
+}
+
+type Mutation {
+  registerConductor(input: ConductorInput!): Conductor!
+  toggleConductorStatus(id: ID!): Conductor!
+}

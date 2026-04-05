@@ -1,0 +1,24 @@
+type Position {
+  id: ID!
+  vehiculeId: ID!
+  latitude: Float!
+  longitude: Float!
+  vitesse: Float
+  horodatage: String!
+}
+
+input PositionInput {
+  vehiculeId: ID!
+  latitude: Float!
+  longitude: Float!
+  vitesse: Float
+}
+
+type Query {
+  lastPosition(vehiculeId: ID!): Position
+  vehicleHistory(vehiculeId: ID!, start: String, end: String): [Position!]!
+}
+
+type Mutation {
+  recordPosition(input: PositionInput!): Position!
+}
