@@ -1,0 +1,12 @@
+com\fleet\vehiculeservice\model\Vehicle$VehicleBuilder.class
+com\fleet\vehiculeservice\service\VehicleProducer.class
+com\fleet\vehiculeservice\dto\VehicleEvent.class
+com\fleet\vehiculeservice\model\VehicleStatus.class
+com\fleet\vehiculeservice\model\Vehicle.class
+com\fleet\vehiculeservice\web\VehicleGraphqlController.class
+com\fleet\vehiculeservice\web\VehicleController.class
+com\fleet\vehiculeservice\service\VehicleService.class
+com\fleet\vehiculeservice\VehiculeServiceApplication.class
+com\fleet\vehiculeservice\service\VehicleConsumer.class
+com\fleet\vehiculeservice\repository\VehicleRepository.class
+com\fleet\vehiculeservice\web\VehicleInput.class
