@@ -4,10 +4,12 @@ import com.fleet.vehiculeservice.model.Vehicle;
 import com.fleet.vehiculeservice.repository.VehicleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class VehicleService {
     private final VehicleRepository vehicleRepository;
 

@@ -1,0 +1,4 @@
+com\fleet\vehiculeservice\service\VehicleServiceTest.class
+com\fleet\vehiculeservice\web\VehicleControllerTest.class
+com\fleet\vehiculeservice\model\VehicleTest.class
+com\fleet\vehiculeservice\VehicleDataTest.class
