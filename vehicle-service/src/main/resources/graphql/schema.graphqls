@@ -5,11 +5,12 @@ type Vehicle {
   modele: String!
   annee: Int
   statut: VehicleStatus!
-  kilometrage: Int!
+  kilometrage: Float!
 }
 
 enum VehicleStatus {
   AVAILABLE
+  RESERVED
   MAINTENANCE
   OUT_OF_SERVICE
 }

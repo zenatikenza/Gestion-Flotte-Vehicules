@@ -1,15 +1,18 @@
 # Stage 1: Build
-FROM maven:3.9.6-eclipse-temurin-17 AS build
+FROM node:20-alpine AS build
 WORKDIR /app
-COPY pom.xml .
-RUN mvn dependency:go-offline
-COPY src ./src
-RUN mvn clean package -DskipTests
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
 
 # Stage 2: Runtime
-FROM eclipse-temurin:17-jre-jammy
+FROM node:20-alpine AS runtime
 WORKDIR /app
-COPY --from=build /app/target/maintenance-service-*.jar app.jar
-ENV JAVA_OPTS="-Xms256m -Xmx512m"
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+COPY --from=build /app/dist ./dist
+COPY package*.json ./
+RUN npm ci --omit=dev
+USER appuser
 EXPOSE 8083
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+CMD ["node", "dist/main"]

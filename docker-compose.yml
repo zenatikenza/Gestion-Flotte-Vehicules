@@ -1,28 +1,125 @@
 services:
-
   postgres:
     image: postgres:15
     environment:
       - POSTGRES_PASSWORD=admin_password
+      - POSTGRES_MULTIPLE_DATABASES=conductor_db,maintenance_db,localization_db
+    volumes:
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
     ports:
       - "5432:5432"
 
-  # --- MICROSERVICES (Version "Placeholder" pour test) ---
+  zookeeper:
+    image: quay.io/strimzi/kafka:latest-kafka-3.7.0
+    command: [
+      "sh", "-c",
+      "bin/zookeeper-server-start.sh config/zookeeper.properties"
+    ]
+    environment:
+      LOG_DIR: /tmp/logs
+
+  kafka:
+    image: quay.io/strimzi/kafka:latest-kafka-3.7.0
+    command: [
+      "sh", "-c",
+      "bin/kafka-server-start.sh config/server.properties --override listeners=PLAINTEXT://0.0.0.0:9092 --override advertised.listeners=PLAINTEXT://kafka:9092 --override zookeeper.connect=zookeeper:2181"
+    ]
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      LOG_DIR: /tmp/logs
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "16686:16686" # UI Jaeger
+      - "4318:4318"  # OTLP HTTP
+
   vehicle-service:
-    image: nginx:alpine # Image très légère pour simuler le service
-    ports: ["8081:80"]
+    build: ./vehicle-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/postgres
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=admin_password
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - MANAGEMENT_OTLP_TRACING_ENDPOINT=http://jaeger:4318/v1/traces
+    depends_on:
+      - postgres
+      - kafka
 
   conductor-service:
-    image: nginx:alpine
-    ports: ["8082:80"]
+    build: ./conductor-service
+    ports:
+      - "8082:8082"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=conductor_db
+      - DB_USER=postgres
+      - DB_PASSWORD=admin_password
+      - KAFKA_BROKERS=kafka:9092
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
+    depends_on:
+      - postgres
+      - kafka
 
   maintenance-service:
-    image: nginx:alpine
-    ports: ["8083:80"]
+    build: ./maintenance-service
+    ports:
+      - "8083:8083"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=maintenance_db
+      - DB_USER=postgres
+      - DB_PASSWORD=admin_password
+      - KAFKA_BROKERS=kafka:9092
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
+    depends_on:
+      - postgres
+      - kafka
+
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - VEHICLE_SERVICE_URL=http://vehicle-service:8081
+      - CONDUCTOR_SERVICE_URL=http://conductor-service:8082
+      - MAINTENANCE_SERVICE_URL=http://maintenance-service:8083
+      - LOCALIZATION_SERVICE_URL=http://localization-service:8084
+      - KAFKA_BROKERS=kafka:9092
+      - NODE_ENV=development
+    depends_on:
+      - vehicle-service
+      - conductor-service
+      - maintenance-service
+      - localization-service
+      - kafka
 
   localization-service:
-    image: nginx:alpine
-    ports: ["8084:80"]
+    build: ./localization-service
+    ports:
+      - "8084:8084"
+      - "50051:50051"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=localization_db
+      - DB_USER=postgres
+      - DB_PASSWORD=admin_password
+      - KAFKA_BROKERS=kafka:9092
+      - PORT=8084
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
+    depends_on:
+      - postgres
+      - kafka
 
   event-service:
     image: nginx:alpine

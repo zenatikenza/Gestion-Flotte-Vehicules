@@ -1,0 +1,58 @@
+type Position {
+  vehiculeId: ID!
+  latitude: Float!
+  longitude: Float!
+  vitesse: Float
+  horodatage: String!
+  enZoneAutorisee: Boolean!
+}
+
+type FleetVehicle {
+  id: ID!
+  immatriculation: String!
+  marque: String!
+  modele: String!
+  statut: String!
+  kilometrage: Float!
+  conducteurAssigne: Conducteur
+  interventions: [Intervention!]!
+  positionActuelle: Position
+}
+
+type Conducteur {
+  id: ID!
+  nom: String!
+  prenom: String!
+  numeroPermis: String!
+  categoriePermis: String!
+  actif: Boolean!
+}
+
+type Intervention {
+  id: ID!
+  vehiculeImmat: String!
+  technicienId: String
+  type: String!
+  statut: String!
+  datePlanifiee: String!
+  dateRealisation: String
+  cout: Float
+  description: String
+}
+
+type Query {
+  fleetVehicles: [FleetVehicle!]!
+  fleetVehicle(id: ID!): FleetVehicle
+  conducteurs: [Conducteur!]!
+  interventions(vehiculeImmat: String): [Intervention!]!
+  positionActuelle(vehiculeId: ID!): Position
+  historiquePositions(vehiculeId: ID!, debut: String!, fin: String!): [Position!]!
+}
+
+type Mutation {
+  assignerConducteur(conducteurId: ID!, vehiculeId: ID!): Conducteur!
+}
+
+type Subscription {
+  positionEnTempsReel(vehiculeId: ID!): Position!
+}

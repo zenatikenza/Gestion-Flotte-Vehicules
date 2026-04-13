@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package localization;
+
+// Service gRPC de localisation GPS.
+// Le streaming server-side (StreamPositions) permet à un consommateur
+// de recevoir un flux continu de positions pour un véhicule donné.
+service LocalizationService {
+  // Retourne la dernière position connue d'un véhicule
+  rpc GetCurrentPosition(VehicleRequest) returns (PositionResponse);
+
+  // Stream server-side : émet les positions en temps réel (usage interne / tests)
+  rpc StreamPositions(VehicleRequest) returns (stream PositionResponse);
+
+  // Retourne l'historique des positions sur une plage temporelle
+  rpc GetPositionHistory(HistoryRequest) returns (HistoryResponse);
+}
+
+message VehicleRequest {
+  string vehicule_id = 1;
+}
+
+message HistoryRequest {
+  string vehicule_id = 1;
+  string debut       = 2;
+  string fin         = 3;
+}
+
+message PositionResponse {
+  string vehicule_id        = 1;
+  double latitude           = 2;
+  double longitude          = 3;
+  double vitesse            = 4;
+  string horodatage         = 5;
+  bool   en_zone_autorisee  = 6;
+}
+
+message HistoryResponse {
+  repeated PositionResponse positions = 1;
+}
