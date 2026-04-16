@@ -519,6 +519,22 @@
   },
   "clients": [
     {
+      "clientId": "fleet-frontend",
+      "name": "Fleet Frontend",
+      "description": "Application React frontend",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": ["http://localhost:5173/*", "http://localhost:80/*"],
+      "webOrigins": ["http://localhost:5173", "http://localhost"],
+      "protocol": "openid-connect",
+      "fullScopeAllowed": true,
+      "attributes": {}
+    },
+    {
       "id": "19d6ab69-5024-41e7-ae20-b9b99ad1a592",
       "clientId": "account",
       "name": "${client_account}",
@@ -1882,22 +1898,6 @@
         "config": {}
       },
       {
-        "id": "8cc4d455-2d49-42c0-a7e7-2f42c7b05432",
-        "name": "Allowed Registration Web Origins",
-        "providerId": "registration-web-origins",
-        "subType": "anonymous",
-        "subComponents": {},
-        "config": {}
-      },
-      {
-        "id": "56f99e19-b090-4327-a421-2c5838df05b9",
-        "name": "Allowed Registration Web Origins",
-        "providerId": "registration-web-origins",
-        "subType": "authenticated",
-        "subComponents": {},
-        "config": {}
-      },
-      {
         "id": "3d610468-7e6a-4fb4-8932-af845899e3ef",
         "name": "Allowed Client Scopes",
         "providerId": "allowed-client-templates",
@@ -2059,15 +2059,6 @@
           "userSetupAllowed": false
         },
         {
-          "authenticatorConfig": "browser-conditional-credential",
-          "authenticator": "conditional-credential",
-          "authenticatorFlow": false,
-          "requirement": "REQUIRED",
-          "priority": 20,
-          "autheticatorFlow": false,
-          "userSetupAllowed": false
-        },
-        {
           "authenticator": "auth-otp-form",
           "authenticatorFlow": false,
           "requirement": "ALTERNATIVE",
@@ -2184,15 +2175,6 @@
           "authenticatorFlow": false,
           "requirement": "REQUIRED",
           "priority": 10,
-          "autheticatorFlow": false,
-          "userSetupAllowed": false
-        },
-        {
-          "authenticatorConfig": "first-broker-login-conditional-credential",
-          "authenticator": "conditional-credential",
-          "authenticatorFlow": false,
-          "requirement": "REQUIRED",
-          "priority": 20,
           "autheticatorFlow": false,
           "userSetupAllowed": false
         },
@@ -2673,24 +2655,10 @@
   ],
   "authenticatorConfig": [
     {
-      "id": "77c55585-b51e-4d67-9f31-53d9c808fd6f",
-      "alias": "browser-conditional-credential",
-      "config": {
-        "credentials": "webauthn-passwordless"
-      }
-    },
-    {
       "id": "448c013d-015d-46a0-866a-b141bff176d9",
       "alias": "create unique user config",
       "config": {
         "require.password.update.after.registration": "false"
-      }
-    },
-    {
-      "id": "60d647b8-cefb-4a8f-a4a4-25f76635a108",
-      "alias": "first-broker-login-conditional-credential",
-      "config": {
-        "credentials": "webauthn-passwordless"
       }
     },
     {
@@ -2856,5 +2824,55 @@
   },
   "clientPolicies": {
     "policies": []
-  }
+  },
+  "users": [
+    {
+      "id": "a1b2c3d4-0001-0000-0000-000000000001",
+      "username": "admin_flotte",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "Flotte",
+      "email": "admin@fleet.local",
+      "credentials": [{ "type": "password", "value": "Admin1234!", "temporary": false }],
+      "realmRoles": ["admin", "default-roles-fleetmanagement"],
+      "groups": []
+    },
+    {
+      "id": "a1b2c3d4-0002-0000-0000-000000000002",
+      "username": "manager_flotte",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Manager",
+      "lastName": "Flotte",
+      "email": "manager@fleet.local",
+      "credentials": [{ "type": "password", "value": "Manager1234!", "temporary": false }],
+      "realmRoles": ["manager", "default-roles-fleetmanagement"],
+      "groups": []
+    },
+    {
+      "id": "a1b2c3d4-0003-0000-0000-000000000003",
+      "username": "technicien_flotte",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Technicien",
+      "lastName": "Flotte",
+      "email": "tech@fleet.local",
+      "credentials": [{ "type": "password", "value": "Tech1234!", "temporary": false }],
+      "realmRoles": ["technicien", "default-roles-fleetmanagement"],
+      "groups": []
+    },
+    {
+      "id": "a1b2c3d4-0004-0000-0000-000000000004",
+      "username": "utilisateur_flotte",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Utilisateur",
+      "lastName": "Flotte",
+      "email": "user@fleet.local",
+      "credentials": [{ "type": "password", "value": "User1234!", "temporary": false }],
+      "realmRoles": ["utilisateur", "default-roles-fleetmanagement"],
+      "groups": []
+    }
+  ]
 }

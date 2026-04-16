@@ -292,6 +292,32 @@ describe('ConducteurService (unitaire)', () => {
     });
   });
 
+  // ── findMesAssignations ───────────────────────────────────────────────────
+  describe('findMesAssignations', () => {
+    it('devrait retourner les assignations du conducteur lié au keycloakUserId', async () => {
+      const assignation = { id: 'assign-001', vehiculeId: 'v-001', statut: StatutAssignation.EN_COURS };
+      const conducteurAvecAssignation = { ...conducteurEntity, keycloakUserId: 'kc-uuid-001', assignations: [assignation] };
+      conducteurRepo.findOne.mockResolvedValue(conducteurAvecAssignation);
+
+      const result = await service.findMesAssignations('kc-uuid-001');
+
+      expect(result).toHaveLength(1);
+      expect(result[0].vehiculeId).toBe('v-001');
+      expect(conducteurRepo.findOne).toHaveBeenCalledWith({
+        where: { keycloakUserId: 'kc-uuid-001' },
+        relations: ['assignations'],
+      });
+    });
+
+    it('devrait retourner un tableau vide si aucun conducteur ne correspond au keycloakUserId', async () => {
+      conducteurRepo.findOne.mockResolvedValue(null);
+
+      const result = await service.findMesAssignations('kc-inconnu');
+
+      expect(result).toEqual([]);
+    });
+  });
+
   // ── desassignerParVehicule (SAGA) ─────────────────────────────────────────
   describe('desassignerParVehicule', () => {
     it('devrait terminer toutes les assignations du véhicule supprimé', async () => {

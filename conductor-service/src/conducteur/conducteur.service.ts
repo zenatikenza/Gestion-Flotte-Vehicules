@@ -186,6 +186,15 @@ export class ConducteurService {
     });
   }
 
+  async findMesAssignations(keycloakUserId: string): Promise<Assignation[]> {
+    const conducteur = await this.conducteurRepository.findOne({
+      where: { keycloakUserId },
+      relations: ['assignations'],
+    });
+    if (!conducteur) return [];
+    return conducteur.assignations ?? [];
+  }
+
   async desassignerParVehicule(vehiculeId: string): Promise<void> {
     const assignations = await this.assignationRepository.find({
       where: { vehiculeId, statut: StatutAssignation.EN_COURS },

@@ -40,6 +40,37 @@ type Intervention {
   description: String
 }
 
+type KeycloakUser {
+  id: ID!
+  username: String!
+  email: String
+  firstName: String
+  lastName: String
+  enabled: Boolean!
+  realmRoles: [String!] 
+}
+
+type FleetStats {
+  totalVehicules: Int!
+  disponibles: Int!
+  enService: Int!
+  enMaintenance: Int!
+  horsService: Int!
+  totalConducteurs: Int!
+  assignationsActives: Int!
+  interventionsActives: Int!
+}
+
+type AdminStats {
+  totalUtilisateurs: Int!
+  admins: Int!
+  managers: Int!
+  techniciens: Int!
+  utilisateurs: Int!
+  actifs: Int!
+  inactifs: Int!
+}
+
 type Query {
   fleetVehicles: [FleetVehicle!]!
   fleetVehicle(id: ID!): FleetVehicle
@@ -47,10 +78,28 @@ type Query {
   interventions(vehiculeImmat: String): [Intervention!]!
   positionActuelle(vehiculeId: ID!): Position
   historiquePositions(vehiculeId: ID!, debut: String!, fin: String!): [Position!]!
+  adminUsers: [KeycloakUser!]!
+  adminStats: AdminStats!
+  fleetStats: FleetStats!
 }
 
 type Mutation {
   assignerConducteur(conducteurId: ID!, vehiculeId: ID!): Conducteur!
+  
+  createUser(
+    username: String!,
+    email: String!,
+    firstName: String,
+    lastName: String,
+    password: String!,
+    roles: [String!]!,
+    numeroPermis: String,
+    categoriePermis: String,
+    dateValiditePermis: String
+  ): KeycloakUser!
+
+  toggleUser(userId: ID!, enabled: Boolean!): KeycloakUser!
+  resetPassword(userId: ID!, newPassword: String!): Boolean!
 }
 
 type Subscription {

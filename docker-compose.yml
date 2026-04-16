@@ -3,7 +3,7 @@ services:
     image: postgres:15
     environment:
       - POSTGRES_PASSWORD=admin_password
-      - POSTGRES_MULTIPLE_DATABASES=conductor_db,maintenance_db,localization_db
+      - POSTGRES_MULTIPLE_DATABASES=conductor_db,maintenance_db,localization_db,keycloak_db
     volumes:
       - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
     ports:
@@ -49,9 +49,12 @@ services:
       - SPRING_DATASOURCE_PASSWORD=admin_password
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - MANAGEMENT_OTLP_TRACING_ENDPOINT=http://jaeger:4318/v1/traces
+      - KEYCLOAK_URL=http://keycloak:8080
+      - KEYCLOAK_REALM=FleetManagement
     depends_on:
       - postgres
       - kafka
+      - keycloak
 
   conductor-service:
     build: ./conductor-service
@@ -65,9 +68,12 @@ services:
       - DB_PASSWORD=admin_password
       - KAFKA_BROKERS=kafka:9092
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
+      - KEYCLOAK_URL=http://keycloak:8080
+      - KEYCLOAK_REALM=FleetManagement
     depends_on:
       - postgres
       - kafka
+      - keycloak
 
   maintenance-service:
     build: ./maintenance-service
@@ -81,9 +87,12 @@ services:
       - DB_PASSWORD=admin_password
       - KAFKA_BROKERS=kafka:9092
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
+      - KEYCLOAK_URL=http://keycloak:8080
+      - KEYCLOAK_REALM=FleetManagement
     depends_on:
       - postgres
       - kafka
+      - keycloak
 
   api-gateway:
     build: ./api-gateway
@@ -96,12 +105,17 @@ services:
       - LOCALIZATION_SERVICE_URL=http://localization-service:8084
       - KAFKA_BROKERS=kafka:9092
       - NODE_ENV=development
+      - KEYCLOAK_URL=http://keycloak:8080
+      - KEYCLOAK_REALM=FleetManagement
+      - KC_ADMIN_USERNAME=admin
+      - KC_ADMIN_PASSWORD=admin
     depends_on:
       - vehicle-service
       - conductor-service
       - maintenance-service
       - localization-service
       - kafka
+      - keycloak
 
   localization-service:
     build: ./localization-service
@@ -124,3 +138,36 @@ services:
   event-service:
     image: nginx:alpine
     ports: ["8085:80"]
+    
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.5.7
+    command: ["start-dev", "--import-realm"]
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_DB=postgres
+      - KC_DB_URL=jdbc:postgresql://postgres:5432/keycloak_db
+      - KC_DB_USERNAME=postgres
+      - KC_DB_PASSWORD=admin_password
+      - KC_HOSTNAME_STRICT=false
+      - KC_HTTP_ENABLED=true
+    volumes:
+      - ./Configuration/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  fleet-frontend:
+    build: ./fleet-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - api-gateway
+      - keycloak

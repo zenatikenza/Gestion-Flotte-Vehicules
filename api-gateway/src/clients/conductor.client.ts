@@ -6,8 +6,7 @@ const CONDUCTOR_SERVICE_URL =
 
 /**
  * Client HTTP vers conductor-service (NestJS, port 8082).
- * Le token JWT est transmis via Authorization pour les endpoints protégés
- * (POST/PUT/DELETE requièrent les rôles admin ou manager).
+ * Le token JWT est transmis via Authorization pour les endpoints protégés.
  */
 @Injectable()
 export class ConductorClient {
@@ -15,6 +14,23 @@ export class ConductorClient {
 
   private authHeaders(token?: string): AxiosRequestConfig {
     return token ? { headers: { Authorization: token } } : {};
+  }
+
+  /**
+   * Crée un conducteur dans la base de données métier du microservice.
+   */
+  async create(data: any, token?: string): Promise<any> {
+    try {
+      const response = await axios.post(
+        `${CONDUCTOR_SERVICE_URL}/api/conducteurs`,
+        data,
+        this.authHeaders(token),
+      );
+      return response.data;
+    } catch (err) {
+      this.logger.error(`[conductor-service] create échoué : ${(err as any).message}`);
+      throw err; // On propage l'erreur pour que la Gateway soit au courant
+    }
   }
 
   async findAll(token?: string): Promise<any[]> {

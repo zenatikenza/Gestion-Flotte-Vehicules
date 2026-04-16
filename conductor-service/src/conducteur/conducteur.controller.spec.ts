@@ -202,6 +202,17 @@ describe('ConducteurController (intégration — Testcontainers)', () => {
       .expect(400);
   });
 
+  it('GET /api/conducteurs/me/assignations — 200 : retourne tableau vide si aucun conducteur lié', async () => {
+    // Aucun conducteur ne possède ce keycloakUserId → tableau vide attendu
+    // Le guard est mocké donc le header Authorization est ignoré
+    const res = await request(app.getHttpServer())
+      .get('/api/conducteurs/me/assignations')
+      .set('Authorization', 'Bearer fake-token')
+      .expect(200);
+
+    expect(res.body).toBeInstanceOf(Array);
+  });
+
   it('DELETE /api/conducteurs/:id — 204 : supprime le conducteur', async () => {
     await request(app.getHttpServer())
       .delete(`/api/conducteurs/${conducteurId}`)

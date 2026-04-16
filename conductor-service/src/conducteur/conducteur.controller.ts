@@ -6,10 +6,12 @@ import {
   Delete,
   Body,
   Param,
+  Req,
   HttpCode,
   HttpStatus,
   UseGuards,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { ConducteurService } from './conducteur.service';
 import { CreateConducteurDto } from './dto/create-conducteur.dto';
 import { UpdateConducteurDto } from './dto/update-conducteur.dto';
@@ -28,6 +30,14 @@ export class ConducteurController {
     return this.conducteurService.findAll();
   }
 
+  @Get('me/assignations')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('utilisateur', 'admin', 'manager')
+  getMesAssignations(@Req() req: Request & { user?: Record<string, unknown> }) {
+    const keycloakUserId = req.user?.sub as string;
+    return this.conducteurService.findMesAssignations(keycloakUserId);
+  }
+
   @Get(':id')
   findById(@Param('id') id: string) {
     return this.conducteurService.findById(id);
@@ -36,8 +46,8 @@ export class ConducteurController {
   // ── Écriture — rôle manager ou admin requis ───────────────────────────────
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin', 'manager')
+  //@UseGuards(JwtAuthGuard, RolesGuard)
+  //@Roles('admin', 'manager')
   create(@Body() dto: CreateConducteurDto) {
     return this.conducteurService.create(dto);
   }
