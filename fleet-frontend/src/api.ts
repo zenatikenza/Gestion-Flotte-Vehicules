@@ -47,6 +47,12 @@ export async function fetchVehicles() {
   return res.json()
 }
 
+export async function fetchVehicle(id: string | number) {
+  const res = await authFetch(`${VEHICLE_URL}/${id}`)
+  if (!res.ok) throw await parseError(res, 'Chargement du véhicule')
+  return res.json()
+}
+
 export async function createVehicle(data: {
   licensePlate: string
   brand: string
@@ -108,6 +114,10 @@ export async function fetchMesAssignations() {
   return res.json()
 }
 
+export async function syncConducteurMe(): Promise<void> {
+  await authFetch(`${CONDUCTOR_URL}/me/sync`, { method: 'PUT' })
+}
+
 export async function assignerVehicule(conducteurId: string, vehiculeId: string) {
   const res = await authFetch(`${CONDUCTOR_URL}/${conducteurId}/assigner/${vehiculeId}`, {
     method: 'POST',
@@ -129,16 +139,17 @@ export async function fetchInterventions() {
   return res.json()
 }
 
-/**
- * Retourne uniquement les interventions dont le technicienId = keycloakUserId de l'utilisateur connecté.
- * Filtre côté frontend car le backend expose toutes les interventions.
- */
+export async function fetchInterventionsSignalees() {
+  const res = await authFetch(`${MAINTENANCE_URL}?statut=SIGNALEE`)
+  if (!res.ok) throw await parseError(res, 'Chargement des alertes')
+  return res.json()
+}
+
 export async function fetchMesInterventions() {
-  const all = await fetchInterventions()
   const myId = getUserId()
-  return (Array.isArray(all) ? all : []).filter(
-    (i: { technicienId?: string }) => i.technicienId === myId,
-  )
+  const res = await authFetch(`${MAINTENANCE_URL}?technicienId=${myId}`)
+  if (!res.ok) throw await parseError(res, 'Chargement de mes interventions')
+  return res.json()
 }
 
 export async function createIntervention(data: {
@@ -154,14 +165,45 @@ export async function createIntervention(data: {
   return res.json()
 }
 
+export async function signalerIntervention(data: {
+  vehiculeImmat: string
+  description: string
+  type?: string
+}) {
+  const res = await authFetch(`${MAINTENANCE_URL}/signalement`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+  if (!res.ok) throw await parseError(res, 'Envoi du signalement')
+  return res.json()
+}
+
 export async function updateIntervention(id: string, data: object) {
   const res = await authFetch(`${MAINTENANCE_URL}/${id}`, { method: 'PUT', body: JSON.stringify(data) })
   if (!res.ok) throw await parseError(res, "Modification de l'intervention")
   return res.json()
 }
 
-export async function terminerIntervention(id: string) {
-  const res = await authFetch(`${MAINTENANCE_URL}/${id}/terminer`, { method: 'PUT' })
+export async function demarrerIntervention(
+  id: string,
+  technicienInfo?: { technicienNom?: string; technicienPrenom?: string },
+) {
+  const res = await authFetch(`${MAINTENANCE_URL}/${id}/demarrer`, {
+    method: 'PUT',
+    body: JSON.stringify(technicienInfo ?? {}),
+  })
+  if (!res.ok) throw await parseError(res, "Démarrage de l'intervention")
+  return res.json()
+}
+
+export async function terminerIntervention(
+  id: string,
+  technicienInfo?: { cout?: number; technicienNom?: string; technicienPrenom?: string },
+) {
+  const res = await authFetch(`${MAINTENANCE_URL}/${id}/terminer`, {
+    method: 'PUT',
+    body: JSON.stringify(technicienInfo ?? {}),
+  })
   if (!res.ok) throw await parseError(res, "Clôture de l'intervention")
   return res.json()
 }
@@ -220,6 +262,11 @@ async function gqlFetch<T>(query: string, variables?: Record<string, unknown>): 
   const json = await res.json()
   if (json.errors?.length) throw new Error(json.errors[0].message)
   return json.data as T
+}
+
+export async function fetchTechniciens() {
+  const users = await fetchAdminUsers() as Array<{ id: string; username: string; firstName?: string; lastName?: string; realmRoles?: string[] }>
+  return users.filter((u) => u.realmRoles?.includes('technicien'))
 }
 
 export async function fetchAdminUsers() {

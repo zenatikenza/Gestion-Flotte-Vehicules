@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { fetchMesAssignations, fetchVehicles, createIntervention } from '../api'
-import { getUserId } from '../keycloak'
+import { fetchMesAssignations, fetchVehicle, signalerIntervention } from '../api'
 
 type Assignation = { id: string; vehiculeId: string; statut: string }
 
@@ -13,6 +12,7 @@ const TYPES_INCIDENT = [
 export default function Signalement() {
   const [assignation, setAssignation] = useState<Assignation | null>(null)
   const [vehiculeLabel, setVehiculeLabel] = useState<string | null>(null)
+  const [licensePlate, setLicensePlate] = useState<string | null>(null)
   const [loading, setLoading]   = useState(true)
   const [type, setType]         = useState('URGENCE')
   const [message, setMessage]   = useState('')
@@ -37,11 +37,10 @@ export default function Signalement() {
       // fetchVehicles() passe via authFetch → keycloak.token (token correct).
       // Si le vehicle-service est indisponible, on affiche l'ID brut → pas bloquant.
       if (enCours) {
-        fetchVehicles()
-          .then((vehicles: Array<{ id: number | string; licensePlate: string; brand: string; model: string }>) => {
-            const v = vehicles.find((v) => String(v.id) === enCours.vehiculeId)
-            if (v) setVehiculeLabel(`${v.licensePlate} — ${v.brand} ${v.model}`)
-            else   setVehiculeLabel(enCours.vehiculeId)
+        fetchVehicle(enCours.vehiculeId)
+          .then((v: { licensePlate: string; brand: string; model: string }) => {
+            setLicensePlate(v.licensePlate)
+            setVehiculeLabel(`${v.licensePlate} — ${v.brand} ${v.model}`)
           })
           .catch(() => setVehiculeLabel(enCours.vehiculeId))
       }
@@ -69,12 +68,10 @@ export default function Signalement() {
     setSending(true)
     setError(null)
     try {
-      await createIntervention({
-        vehiculeImmat: assignation.vehiculeId,
-        type,
-        datePlanifiee: new Date().toISOString(),
+      await signalerIntervention({
+        vehiculeImmat: licensePlate ?? assignation.vehiculeId,
         description: message,
-        technicienId: getUserId() || 'conducteur',
+        type,
       })
       setSent(true)
       setMessage('')

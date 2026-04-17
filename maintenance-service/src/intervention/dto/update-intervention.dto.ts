@@ -42,4 +42,12 @@ export class UpdateInterventionDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsString()
+  technicienNom?: string;
+
+  @IsOptional()
+  @IsString()
+  technicienPrenom?: string;
 }

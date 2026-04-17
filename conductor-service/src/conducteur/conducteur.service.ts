@@ -62,6 +62,7 @@ export class ConducteurService {
       categoriePermis: dto.categoriePermis,
       dateValiditePermis: dateValidite,
       keycloakUserId: dto.keycloakUserId,
+      username: dto.username,
       actif: dto.actif ?? true,
     });
 
@@ -193,6 +194,17 @@ export class ConducteurService {
     });
     if (!conducteur) return [];
     return conducteur.assignations ?? [];
+  }
+
+  async syncKeycloakUserId(keycloakUserId: string, username: string): Promise<void> {
+    const alreadySynced = await this.conducteurRepository.findOne({ where: { keycloakUserId } });
+    if (alreadySynced) return;
+
+    const conducteur = await this.conducteurRepository.findOne({ where: { username } });
+    if (!conducteur) return;
+
+    conducteur.keycloakUserId = keycloakUserId;
+    await this.conducteurRepository.save(conducteur);
   }
 
   async desassignerParVehicule(vehiculeId: string): Promise<void> {

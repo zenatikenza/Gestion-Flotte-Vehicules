@@ -2,6 +2,7 @@ export interface MaintenanceEvent {
   eventType:
     | 'maintenance.created'
     | 'maintenance.updated'
+    | 'maintenance.started'
     | 'maintenance.completed'
     | 'maintenance.cancelled';
   interventionId: string;

@@ -16,6 +16,9 @@ export class Conducteur {
   @Column({ unique: true, nullable: true })
   keycloakUserId: string;
 
+  @Column({ unique: true, nullable: true })
+  username: string;
+
   @Column()
   nom: string;
 

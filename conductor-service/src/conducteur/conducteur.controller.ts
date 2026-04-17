@@ -38,6 +38,16 @@ export class ConducteurController {
     return this.conducteurService.findMesAssignations(keycloakUserId);
   }
 
+  @Put('me/sync')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('utilisateur', 'admin', 'manager', 'technicien')
+  syncMe(@Req() req: Request & { user?: Record<string, unknown> }) {
+    const keycloakUserId = req.user?.sub as string;
+    const username = req.user?.preferred_username as string;
+    return this.conducteurService.syncKeycloakUserId(keycloakUserId, username);
+  }
+
   @Get(':id')
   findById(@Param('id') id: string) {
     return this.conducteurService.findById(id);

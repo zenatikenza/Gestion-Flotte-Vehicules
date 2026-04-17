@@ -2,7 +2,7 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 COPY . .
 RUN npm run build
 
@@ -13,7 +13,7 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/proto ./proto
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 USER appuser
 # HTTP REST + gRPC
 EXPOSE 8084

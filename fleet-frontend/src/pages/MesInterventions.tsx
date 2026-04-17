@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
-import { fetchMesInterventions, fetchVehicles, terminerIntervention, annulerIntervention } from '../api'
+import { fetchMesInterventions, fetchVehicles, demarrerIntervention, terminerIntervention, annulerIntervention } from '../api'
+import keycloak from '../keycloak'
 import type { Vehicle, Intervention } from '../types'
 
 const STATUT_COLORS: Record<string, string> = {
+  SIGNALEE: 'bg-purple-100 text-purple-700',
   PLANIFIEE: 'bg-blue-100 text-blue-700',
   EN_COURS: 'bg-yellow-100 text-yellow-700',
   TERMINEE: 'bg-green-100 text-green-700',
@@ -25,10 +27,26 @@ export default function MesInterventions() {
 
   useEffect(() => { load() }, [load])
 
+  function getTechnicienInfo() {
+    const nom = keycloak.tokenParsed?.family_name || keycloak.tokenParsed?.preferred_username || ''
+    const prenom = keycloak.tokenParsed?.given_name || ''
+    return { technicienNom: nom, technicienPrenom: prenom }
+  }
+
+  async function handleDemarrer(i: Intervention) {
+    setActionError(null)
+    try {
+      await demarrerIntervention(i.id, getTechnicienInfo())
+      setActionSuccess(`Intervention démarrée.`)
+      setTimeout(() => setActionSuccess(null), 3000)
+      await load()
+    } catch (e) { setActionError((e as Error).message) }
+  }
+
   async function handleTerminer(i: Intervention) {
     setActionError(null)
     try {
-      await terminerIntervention(i.id)
+      await terminerIntervention(i.id, getTechnicienInfo())
       setActionSuccess(`Intervention terminée.`)
       setTimeout(() => setActionSuccess(null), 3000)
       await load()
@@ -118,8 +136,8 @@ export default function MesInterventions() {
                   return (
                     <tr key={i.id} className={`hover:bg-gray-50 ${i.type === 'URGENCE' ? 'bg-red-50' : ''}`}>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUT_COLORS[i.statut]}`}>
-                          {i.statut === 'PLANIFIEE' ? 'Planifiée' : 'En cours'}
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUT_COLORS[i.statut] ?? 'bg-gray-100 text-gray-600'}`}>
+                          {i.statut === 'PLANIFIEE' ? 'Planifiée' : i.statut === 'EN_COURS' ? 'En cours' : i.statut}
                         </span>
                       </td>
                       <td className="px-4 py-3">
@@ -137,7 +155,12 @@ export default function MesInterventions() {
                       <td className="px-4 py-3 text-gray-600 text-xs">{new Date(i.datePlanifiee).toLocaleDateString('fr-FR')}</td>
                       <td className="px-4 py-3">
                         <div className="flex gap-2">
-                          <button onClick={() => handleTerminer(i)} className="text-green-600 hover:text-green-800 text-xs font-medium">✓ Terminer</button>
+                          {i.statut === 'PLANIFIEE' && (
+                            <button onClick={() => handleDemarrer(i)} className="text-blue-600 hover:text-blue-800 text-xs font-medium">▶ Démarrer</button>
+                          )}
+                          {i.statut === 'EN_COURS' && (
+                            <button onClick={() => handleTerminer(i)} className="text-green-600 hover:text-green-800 text-xs font-medium">✓ Terminer</button>
+                          )}
                           <button onClick={() => handleAnnuler(i)} className="text-gray-500 hover:text-gray-700 text-xs font-medium">Annuler</button>
                         </div>
                       </td>

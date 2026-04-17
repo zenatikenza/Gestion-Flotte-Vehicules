@@ -35,6 +35,10 @@ export class CreateConducteurDto {
   keycloakUserId?: string;
 
   @IsOptional()
+  @IsString()
+  username?: string;
+
+  @IsOptional()
   @IsBoolean()
   actif?: boolean;
 }

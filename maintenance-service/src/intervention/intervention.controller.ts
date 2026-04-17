@@ -17,19 +17,28 @@ import { UpdateInterventionDto } from './dto/update-intervention.dto';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { TypeIntervention } from './enums/type-intervention.enum';
+import { StatutIntervention } from './enums/statut-intervention.enum';
 
 @Controller('api/interventions')
 export class InterventionController {
   constructor(private readonly interventionService: InterventionService) {}
 
-  // ── Lecture — publique ────────────────────────────────────────────────────
+  // ── Lecture ───────────────────────────────────────────────────────────────
 
   @Get()
-  findAll(@Query('vehiculeImmat') vehiculeImmat?: string) {
+  findAll(
+    @Query('vehiculeImmat') vehiculeImmat?: string,
+    @Query('statut') statut?: string,
+    @Query('technicienId') technicienId?: string,
+  ) {
     if (vehiculeImmat) {
       return this.interventionService.findByVehicule(vehiculeImmat);
     }
-    return this.interventionService.findAll();
+    return this.interventionService.findAll({
+      statut: statut as StatutIntervention | undefined,
+      technicienId,
+    });
   }
 
   @Get(':id')
@@ -37,20 +46,55 @@ export class InterventionController {
     return this.interventionService.findById(id);
   }
 
-  // ── Création / mise à jour — rôle technicien ou admin requis ─────────────
+  // ── Création — admin ou manager ───────────────────────────────────────────
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin', 'technicien')
+  @Roles('admin', 'manager')
   create(@Body() dto: CreateInterventionDto) {
     return this.interventionService.create(dto);
   }
 
+  // ── Signalement conducteur — tous les rôles authentifiés ─────────────────
+
+  @Post('signalement')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin', 'manager', 'technicien', 'utilisateur')
+  signaler(
+    @Body()
+    body: {
+      vehiculeImmat: string;
+      description: string;
+      type?: TypeIntervention;
+    },
+  ) {
+    const dto: CreateInterventionDto = {
+      vehiculeImmat: body.vehiculeImmat,
+      type: body.type ?? TypeIntervention.CORRECTIVE,
+      datePlanifiee: new Date().toISOString(),
+      description: body.description,
+      statut: StatutIntervention.SIGNALEE,
+    };
+    return this.interventionService.create(dto);
+  }
+
+  // ── Mise à jour — admin, manager (planification), technicien (exécution) ──
+
   @Put(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin', 'technicien')
+  @Roles('admin', 'manager', 'technicien')
   update(@Param('id') id: string, @Body() dto: UpdateInterventionDto) {
     return this.interventionService.update(id, dto);
+  }
+
+  @Put(':id/demarrer')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin', 'technicien')
+  demarrer(
+    @Param('id') id: string,
+    @Body() body: { technicienNom?: string; technicienPrenom?: string },
+  ) {
+    return this.interventionService.demarrer(id, body.technicienNom, body.technicienPrenom);
   }
 
   @Put(':id/terminer')
@@ -58,19 +102,19 @@ export class InterventionController {
   @Roles('admin', 'technicien')
   terminer(
     @Param('id') id: string,
-    @Body('cout') cout?: number,
+    @Body() body: { cout?: number; technicienNom?: string; technicienPrenom?: string },
   ) {
-    return this.interventionService.terminer(id, cout);
+    return this.interventionService.terminer(id, body.cout, body.technicienNom, body.technicienPrenom);
   }
 
   @Put(':id/annuler')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin', 'technicien')
+  @Roles('admin', 'manager', 'technicien')
   annuler(@Param('id') id: string) {
     return this.interventionService.annuler(id);
   }
 
-  // ── Suppression — rôle admin uniquement ───────────────────────────────────
+  // ── Suppression — admin uniquement ────────────────────────────────────────
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)

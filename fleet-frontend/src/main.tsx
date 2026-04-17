@@ -4,10 +4,21 @@ import keycloak from './keycloak'
 import App from './App'
 import './index.css'
 
-// Support injection de token Cypress (test uniquement — ignoré en production)
-const _cypressTokens = (window as any).__cypress_tokens__ as
-  | { token: string; refreshToken: string; idToken: string }
-  | undefined
+// Support injection de token Cypress (test uniquement — ignoré en production).
+// Priorité : window.__cypress_tokens__ (onBeforeLoad) > localStorage (_cy_kc_tokens).
+// localStorage est restauré par cy.session à chaque test, ce qui permet à main.tsx
+// de trouver les tokens sans onBeforeLoad sur chaque cy.visit.
+function getCypressTokens(): { token: string; refreshToken: string; idToken: string } | undefined {
+  const fromWindow = (window as any).__cypress_tokens__
+  if (fromWindow) return fromWindow
+  try {
+    const raw = localStorage.getItem('_cy_kc_tokens')
+    if (raw) return JSON.parse(raw)
+  } catch { /* ignore */ }
+  return undefined
+}
+
+const _cypressTokens = getCypressTokens()
 
 keycloak
   .init({

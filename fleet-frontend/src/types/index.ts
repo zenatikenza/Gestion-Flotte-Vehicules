@@ -25,7 +25,7 @@ export interface Conducteur {
 }
 
 // maintenance-service (NestJS)
-export type StatutIntervention = 'PLANIFIEE' | 'EN_COURS' | 'TERMINEE' | 'ANNULEE'
+export type StatutIntervention = 'SIGNALEE' | 'PLANIFIEE' | 'EN_COURS' | 'TERMINEE' | 'ANNULEE'
 export type TypeIntervention = 'PREVENTIVE' | 'CORRECTIVE' | 'URGENCE'
 
 export interface Intervention {
@@ -33,10 +33,14 @@ export interface Intervention {
   vehiculeImmat: string
   type: TypeIntervention
   datePlanifiee: string
+  dateRealisation?: string
+  dateTraitement?: string
   description?: string
   cout?: number
   statut: StatutIntervention
   technicienId?: string
+  technicienNom?: string
+  technicienPrenom?: string
 }
 
 // localization-service (NestJS)

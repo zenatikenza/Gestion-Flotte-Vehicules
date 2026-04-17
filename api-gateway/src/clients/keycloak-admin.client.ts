@@ -51,25 +51,32 @@ export class KeycloakAdminClient {
 
   // ── Vérification du rôle admin sur le token appelant ─────────────────────
 
-  assertAdmin(ctx: any): void {
+  private assertRoles(ctx: any, allowedRoles: string[]): void {
     const authHeader: string = ctx?.req?.headers?.authorization ?? '';
     const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
     if (!token) throw new ForbiddenException('Token manquant');
 
-    // Décode le payload JWT sans vérifier la signature
-    // (la signature est déjà validée en amont par Keycloak)
     try {
       const parts = token.split('.');
       if (parts.length < 2) throw new Error('Token malformé');
       const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf-8'));
       const roles: string[] = payload?.realm_access?.roles ?? [];
-      if (!roles.includes('admin')) {
-        throw new ForbiddenException('Accès réservé aux administrateurs');
+      const hasRole = allowedRoles.some((r) => roles.includes(r));
+      if (!hasRole) {
+        throw new ForbiddenException(`Accès réservé aux rôles : ${allowedRoles.join(', ')}`);
       }
     } catch (e) {
       if (e instanceof ForbiddenException) throw e;
       throw new ForbiddenException('Token invalide');
     }
+  }
+
+  assertAdmin(ctx: any): void {
+    this.assertRoles(ctx, ['admin']);
+  }
+
+  assertAdminOrManager(ctx: any): void {
+    this.assertRoles(ctx, ['admin', 'manager']);
   }
 
   // ── CRUD utilisateurs Keycloak ────────────────────────────────────────────

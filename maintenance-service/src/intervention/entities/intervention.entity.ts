@@ -30,4 +30,13 @@ export class Intervention {
 
   @Column({ nullable: true })
   description: string;
+
+  @Column({ nullable: true })
+  technicienNom: string;
+
+  @Column({ nullable: true })
+  technicienPrenom: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  dateTraitement: Date;
 }

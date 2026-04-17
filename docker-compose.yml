@@ -5,6 +5,7 @@ services:
       - POSTGRES_PASSWORD=admin_password
       - POSTGRES_MULTIPLE_DATABASES=conductor_db,maintenance_db,localization_db,keycloak_db
     volumes:
+      - postgres_data:/var/lib/postgresql/data
       - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
     ports:
       - "5432:5432"
@@ -138,7 +139,40 @@ services:
   event-service:
     image: nginx:alpine
     ports: ["8085:80"]
-    
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - vehicle-service
+      - conductor-service
+      - maintenance-service
+      - localization-service
+      - api-gateway
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=admin
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+
   keycloak:
     image: quay.io/keycloak/keycloak:26.5.7
     command: ["start-dev", "--import-realm"]
@@ -171,3 +205,7 @@ services:
     depends_on:
       - api-gateway
       - keycloak
+
+volumes:
+  postgres_data:
+  grafana_data:

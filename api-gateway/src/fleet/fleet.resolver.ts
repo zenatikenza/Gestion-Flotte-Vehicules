@@ -100,7 +100,7 @@ export class FleetResolver {
 
   @Query('adminUsers')
   async adminUsers(@Context() ctx: any): Promise<any[]> {
-    this.keycloakAdmin.assertAdmin(ctx);
+    this.keycloakAdmin.assertAdminOrManager(ctx);
     return this.keycloakAdmin.listUsers();
   }
 
@@ -187,6 +187,7 @@ export class FleetResolver {
 
         await this.conductorClient.create({
           keycloakUserId: keycloakUser.id,
+          username: username,
           nom: lastName || username,
           prenom: firstName || '',
           numeroPermis: numeroPermis,

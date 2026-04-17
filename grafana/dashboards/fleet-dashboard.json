@@ -1,0 +1,156 @@
+{
+  "title": "Fleet Management - Overview",
+  "uid": "fleet-overview",
+  "schemaVersion": 38,
+  "version": 1,
+  "tags": ["fleet"],
+  "timezone": "browser",
+  "time": { "from": "now-1h", "to": "now" },
+  "refresh": "30s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Requêtes par service (req/s)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "rate(http_server_requests_seconds_count{job=\"vehicle-service\"}[1m])",
+          "legendFormat": "vehicle-service"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "rate(http_server_duration_milliseconds_count{job=\"conductor-service\"}[1m])",
+          "legendFormat": "conductor-service"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "rate(http_server_duration_milliseconds_count{job=\"maintenance-service\"}[1m])",
+          "legendFormat": "maintenance-service"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "rate(http_server_duration_milliseconds_count{job=\"localization-service\"}[1m])",
+          "legendFormat": "localization-service"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "reqps", "color": { "mode": "palette-classic" } }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Taux d'erreur par service (%)",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "rate(http_server_requests_seconds_count{job=\"vehicle-service\",status=~\"5..\"}[1m]) / rate(http_server_requests_seconds_count{job=\"vehicle-service\"}[1m]) * 100",
+          "legendFormat": "vehicle-service"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "rate(http_server_duration_milliseconds_count{job=\"maintenance-service\",http_status_code=~\"5..\"}[1m]) / rate(http_server_duration_milliseconds_count{job=\"maintenance-service\"}[1m]) * 100",
+          "legendFormat": "maintenance-service"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "percent", "color": { "mode": "palette-classic" }, "thresholds": { "steps": [{ "value": 0, "color": "green" }, { "value": 1, "color": "yellow" }, { "value": 5, "color": "red" }] } }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Latence P95 vehicle-service (ms)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.95, rate(http_server_requests_seconds_bucket{job=\"vehicle-service\"}[5m])) * 1000",
+          "legendFormat": "P95 vehicle-service"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.95, rate(http_server_duration_milliseconds_bucket{job=\"maintenance-service\"}[5m]))",
+          "legendFormat": "P95 maintenance-service"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ms", "color": { "mode": "palette-classic" } }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Véhicules par statut",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 8, "w": 6, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "fleet_vehicles_total{job=\"vehicle-service\"}",
+          "legendFormat": "Total"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "fleet_vehicles_available{job=\"vehicle-service\"}",
+          "legendFormat": "Disponibles"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "fleet_vehicles_reserved{job=\"vehicle-service\"}",
+          "legendFormat": "En service"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "color": { "mode": "thresholds" } }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Positions GPS enregistrées (total)",
+      "type": "stat",
+      "gridPos": { "x": 18, "y": 8, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "fleet_positions_recorded_total{job=\"localization-service\"}",
+          "legendFormat": "Positions GPS"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short" }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Alertes géofencing déclenchées (total)",
+      "type": "stat",
+      "gridPos": { "x": 18, "y": 12, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "fleet_geofencing_alerts_total{job=\"localization-service\"}",
+          "legendFormat": "Alertes géofencing"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "color": { "fixedColor": "red", "mode": "fixed" } }
+      }
+    },
+    {
+      "id": 7,
+      "title": "Logs récents (Loki)",
+      "type": "logs",
+      "gridPos": { "x": 0, "y": 16, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "{job=~\"fleet.*\"}",
+          "legendFormat": ""
+        }
+      ]
+    }
+  ]
+}

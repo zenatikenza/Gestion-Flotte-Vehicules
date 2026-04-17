@@ -526,7 +526,7 @@
       "publicClient": true,
       "standardFlowEnabled": true,
       "implicitFlowEnabled": false,
-      "directAccessGrantsEnabled": false,
+      "directAccessGrantsEnabled": true,
       "serviceAccountsEnabled": false,
       "redirectUris": ["http://localhost:5173/*", "http://localhost:80/*"],
       "webOrigins": ["http://localhost:5173", "http://localhost"],

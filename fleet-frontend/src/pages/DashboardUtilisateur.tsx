@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { fetchMesAssignations, fetchVehicles, fetchPositionVehicule } from '../api'
+import { fetchMesAssignations, fetchVehicles, fetchPositionVehicule, syncConducteurMe } from '../api'
 import type { Vehicle, Position } from '../types'
 import { getUsername } from '../keycloak'
 
@@ -45,7 +45,10 @@ export default function DashboardUtilisateur() {
     }
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    syncConducteurMe().catch(() => {})
+    load()
+  }, [load])
 
   if (loading) return <div className="flex items-center justify-center h-64 text-gray-400">Chargement...</div>
 

@@ -8,6 +8,7 @@ import {
   Min,
 } from 'class-validator';
 import { TypeIntervention } from '../enums/type-intervention.enum';
+import { StatutIntervention } from '../enums/statut-intervention.enum';
 
 export class CreateInterventionDto {
   @IsString()
@@ -34,4 +35,8 @@ export class CreateInterventionDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsEnum(StatutIntervention)
+  statut?: StatutIntervention;
 }

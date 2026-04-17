@@ -15,9 +15,16 @@ export class InterventionService {
     private readonly maintenanceProducer: MaintenanceProducerService,
   ) {}
 
-  // 1. Trouver tout
-  async findAll(): Promise<Intervention[]> {
+  // 1. Trouver tout (avec filtres optionnels)
+  async findAll(filters?: {
+    statut?: StatutIntervention;
+    technicienId?: string;
+  }): Promise<Intervention[]> {
+    const where: Record<string, unknown> = {};
+    if (filters?.statut) where['statut'] = filters.statut;
+    if (filters?.technicienId) where['technicienId'] = filters.technicienId;
     return this.interventionRepository.find({
+      where: Object.keys(where).length > 0 ? where : undefined,
       order: { datePlanifiee: 'ASC' },
     });
   }
@@ -44,7 +51,7 @@ export class InterventionService {
       technicienId: dto.technicienId,
       type: dto.type,
       datePlanifiee: new Date(dto.datePlanifiee),
-      statut: StatutIntervention.PLANIFIEE,
+      statut: dto.statut ?? StatutIntervention.PLANIFIEE,
       cout: dto.cout,
       description: dto.description,
     });
@@ -100,8 +107,36 @@ export class InterventionService {
     return saved;
   }
 
-  // 6. Terminer
-  async terminer(id: string, cout?: number): Promise<Intervention> {
+  // 6. Démarrer
+  async demarrer(id: string, technicienNom?: string, technicienPrenom?: string): Promise<Intervention> {
+    const intervention = await this.findById(id);
+
+    if (intervention.statut !== StatutIntervention.PLANIFIEE) {
+      throw new BadRequestException(
+        'Seule une intervention planifiée peut être démarrée',
+      );
+    }
+
+    intervention.statut = StatutIntervention.EN_COURS;
+    if (technicienNom) intervention.technicienNom = technicienNom;
+    if (technicienPrenom) intervention.technicienPrenom = technicienPrenom;
+    const saved = await this.interventionRepository.save(intervention);
+
+    await this.maintenanceProducer.sendEvent({
+      eventType: 'maintenance.started',
+      interventionId: saved.id,
+      vehicle_id: 0,
+      vehicleImmat: saved.vehiculeImmat,
+      type: saved.type,
+      statut: saved.statut,
+      message: `Intervention démarrée`,
+    });
+
+    return saved;
+  }
+
+  // 7. Terminer
+  async terminer(id: string, cout?: number, technicienNom?: string, technicienPrenom?: string): Promise<Intervention> {
     const intervention = await this.findById(id);
 
     if (
@@ -115,7 +150,10 @@ export class InterventionService {
 
     intervention.statut = StatutIntervention.TERMINEE;
     intervention.dateRealisation = new Date();
+    intervention.dateTraitement = new Date();
     if (cout !== undefined) intervention.cout = cout;
+    if (technicienNom) intervention.technicienNom = technicienNom;
+    if (technicienPrenom) intervention.technicienPrenom = technicienPrenom;
 
     const saved = await this.interventionRepository.save(intervention);
 

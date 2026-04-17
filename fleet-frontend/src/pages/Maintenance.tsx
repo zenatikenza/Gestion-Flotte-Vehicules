@@ -3,6 +3,7 @@ import {
   fetchInterventions, createIntervention, terminerIntervention,
   annulerIntervention, deleteIntervention, fetchVehicles,
 } from '../api'
+import { hasAnyRole } from '../keycloak'
 
 interface Intervention {
   id: string
@@ -60,6 +61,7 @@ function actionRefuseeMessage(action: string, statut: string): string {
 }
 
 export default function Maintenance() {
+  const canCreate = hasAnyRole(['admin', 'manager'])
   const [interventions, setInterventions] = useState<Intervention[]>([])
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [loading, setLoading] = useState(true)
@@ -159,12 +161,14 @@ export default function Maintenance() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Maintenance</h2>
-        <button
-          onClick={() => { setForm(EMPTY_FORM); setActionError(null); setShowModal(true) }}
-          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm font-medium"
-        >
-          + Nouvelle intervention
-        </button>
+        {canCreate && (
+          <button
+            onClick={() => { setForm(EMPTY_FORM); setActionError(null); setShowModal(true) }}
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm font-medium"
+          >
+            + Nouvelle intervention
+          </button>
+        )}
       </div>
 
       {actionError && (
