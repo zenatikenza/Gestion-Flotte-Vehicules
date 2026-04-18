@@ -60,6 +60,7 @@ export default function DashboardManager() {
   const [planModal, setPlanModal] = useState<Intervention | null>(null)
   const [planDate, setPlanDate] = useState('')
   const [planTechnicienId, setPlanTechnicienId] = useState('')
+  const [planCout, setPlanCout] = useState<number | ''>('')
   const [planLoading, setPlanLoading] = useState(false)
   const [planError, setPlanError] = useState<string | null>(null)
 
@@ -94,10 +95,12 @@ export default function DashboardManager() {
         statut: 'PLANIFIEE',
         datePlanifiee: new Date(planDate).toISOString(),
         ...(planTechnicienId ? { technicienId: planTechnicienId } : {}),
+        ...(planCout !== '' ? { cout: Number(planCout) } : {}),
       })
       setPlanModal(null)
       setPlanDate('')
       setPlanTechnicienId('')
+      setPlanCout('')
       await load()
     } catch (e) {
       setPlanError((e as Error).message)
@@ -109,6 +112,11 @@ export default function DashboardManager() {
   function formatTechnicien(i: Intervention): string {
     if (i.technicienNom) {
       return `${i.technicienPrenom ?? ''} ${i.technicienNom}`.trim()
+    }
+    if (i.technicienId) {
+      const t = techniciens.find((t) => t.id === i.technicienId)
+      if (t) return t.firstName || t.lastName ? `${t.firstName ?? ''} ${t.lastName ?? ''}`.trim() : t.username
+      return `Technicien #${i.technicienId.slice(0, 8)}`
     }
     return 'Non assigné'
   }
@@ -488,10 +496,21 @@ export default function DashboardManager() {
                   <p className="text-xs text-gray-400 mt-1">Aucun technicien disponible (vérifiez la connexion api-gateway)</p>
                 )}
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Coût estimé (€)</label>
+                <input
+                  type="number"
+                  min={0}
+                  placeholder="Optionnel"
+                  value={planCout}
+                  onChange={(e) => setPlanCout(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
               <div className="flex gap-3 pt-1">
                 <button
                   type="button"
-                  onClick={() => { setPlanModal(null); setPlanDate('') }}
+                  onClick={() => { setPlanModal(null); setPlanDate(''); setPlanTechnicienId(''); setPlanCout('') }}
                   className="flex-1 py-2 border border-gray-200 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   Annuler

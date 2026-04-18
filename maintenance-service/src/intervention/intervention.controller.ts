@@ -7,6 +7,7 @@ import {
   Body,
   Param,
   Query,
+  Headers,
   HttpCode,
   HttpStatus,
   UseGuards,
@@ -89,22 +90,37 @@ export class InterventionController {
 
   @Put(':id/demarrer')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin', 'technicien')
+  @Roles('admin', 'manager', 'technicien')
   demarrer(
     @Param('id') id: string,
-    @Body() body: { technicienNom?: string; technicienPrenom?: string },
+    @Headers('authorization') authHeader: string,
   ) {
-    return this.interventionService.demarrer(id, body.technicienNom, body.technicienPrenom);
+    const { nom, prenom } = this.extractNameFromToken(authHeader);
+    return this.interventionService.demarrer(id, nom, prenom);
   }
 
   @Put(':id/terminer')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin', 'technicien')
+  @Roles('admin', 'manager', 'technicien')
   terminer(
     @Param('id') id: string,
-    @Body() body: { cout?: number; technicienNom?: string; technicienPrenom?: string },
+    @Body() body: { cout?: number },
+    @Headers('authorization') authHeader: string,
   ) {
-    return this.interventionService.terminer(id, body.cout, body.technicienNom, body.technicienPrenom);
+    const { nom, prenom } = this.extractNameFromToken(authHeader);
+    return this.interventionService.terminer(id, body.cout, nom, prenom);
+  }
+
+  private extractNameFromToken(authHeader: string): { nom: string; prenom: string } {
+    try {
+      const token = authHeader?.replace('Bearer ', '') ?? '';
+      const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString('utf-8'));
+      const nom = payload.family_name || payload.preferred_username || payload.sub || '';
+      const prenom = payload.given_name || '';
+      return { nom, prenom };
+    } catch {
+      return { nom: '', prenom: '' };
+    }
   }
 
   @Put(':id/annuler')

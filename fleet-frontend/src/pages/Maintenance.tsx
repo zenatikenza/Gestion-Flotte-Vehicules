@@ -1,9 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   fetchInterventions, createIntervention, terminerIntervention,
-  annulerIntervention, deleteIntervention, fetchVehicles,
+  annulerIntervention, deleteIntervention, fetchVehicles, fetchTechniciens,
+  updateIntervention,
 } from '../api'
 import { hasAnyRole } from '../keycloak'
+
+type TechnicienUser = { id: string; username: string; firstName?: string; lastName?: string }
 
 interface Intervention {
   id: string
@@ -47,6 +50,7 @@ const EMPTY_FORM = {
   datePlanifiee: new Date().toISOString().split('T')[0],
   description: '',
   cout: 0,
+  technicienId: '',
 }
 
 /** Raisons lisibles pour les actions refusées selon le statut */
@@ -62,13 +66,20 @@ function actionRefuseeMessage(action: string, statut: string): string {
 
 export default function Maintenance() {
   const canCreate = hasAnyRole(['admin', 'manager'])
+  const canTerminate = hasAnyRole(['admin', 'technicien'])
+  const canDelete = hasAnyRole(['admin'])
+  const canModify = hasAnyRole(['admin', 'manager'])
   const [interventions, setInterventions] = useState<Intervention[]>([])
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [techniciens, setTechniciens] = useState<TechnicienUser[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [showModal, setShowModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState(EMPTY_FORM)
+  const [editForm, setEditForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [filterStatut, setFilterStatut] = useState('ALL')
 
@@ -76,9 +87,12 @@ export default function Maintenance() {
     try {
       setLoading(true)
       setError(null)
-      const [data, vData] = await Promise.all([fetchInterventions(), fetchVehicles()])
-      setInterventions(Array.isArray(data) ? data : [])
-      setVehicles(Array.isArray(vData) ? vData : [])
+      const [data, vData, tData] = await Promise.allSettled([
+        fetchInterventions(), fetchVehicles(), fetchTechniciens(),
+      ])
+      if (data.status === 'fulfilled') setInterventions(Array.isArray(data.value) ? data.value : [])
+      if (vData.status === 'fulfilled') setVehicles(Array.isArray(vData.value) ? vData.value : [])
+      if (tData.status === 'fulfilled') setTechniciens(Array.isArray(tData.value) ? (tData.value as TechnicienUser[]) : [])
     } catch (e) {
       setError(`Impossible de charger les interventions : ${(e as Error).message}`)
     } finally {
@@ -102,6 +116,7 @@ export default function Maintenance() {
         datePlanifiee: form.datePlanifiee,
         cout: form.cout || undefined,
         description: form.description || undefined,
+        technicienId: form.technicienId || undefined,
       })
       setShowModal(false)
       setForm(EMPTY_FORM)
@@ -124,6 +139,44 @@ export default function Maintenance() {
       await load()
     } catch (e) {
       setActionError(`Impossible de terminer l'intervention : ${(e as Error).message}`)
+    }
+  }
+
+  function handleOpenEdit(i: Intervention) {
+    setEditingId(i.id)
+    setEditForm({
+      vehiculeImmat: i.vehiculeImmat,
+      type: i.type,
+      datePlanifiee: i.datePlanifiee.split('T')[0],
+      description: i.description ?? '',
+      cout: i.cout ?? 0,
+      technicienId: i.technicienId ?? '',
+    })
+    setActionError(null)
+    setShowEditModal(true)
+  }
+
+  async function handleEditSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!editingId) return
+    setSaving(true)
+    setActionError(null)
+    try {
+      await updateIntervention(editingId, {
+        vehiculeImmat: editForm.vehiculeImmat,
+        type: editForm.type,
+        datePlanifiee: editForm.datePlanifiee,
+        description: editForm.description || undefined,
+        cout: editForm.cout || undefined,
+        technicienId: editForm.technicienId || undefined,
+      })
+      setShowEditModal(false)
+      setEditingId(null)
+      await load()
+    } catch (e) {
+      setActionError(`Impossible de modifier l'intervention : ${(e as Error).message}`)
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -246,8 +299,16 @@ export default function Maintenance() {
                       {i.cout != null ? `${i.cout.toLocaleString('fr-FR')} €` : '—'}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex gap-2">
-                        {(i.statut === 'PLANIFIEE' || i.statut === 'EN_COURS') && (
+                      <div className="flex gap-2 flex-wrap">
+                        {canModify && i.statut === 'PLANIFIEE' && (
+                          <button
+                            onClick={() => handleOpenEdit(i)}
+                            className="text-blue-600 hover:text-blue-800 text-xs font-medium"
+                          >
+                            Modifier
+                          </button>
+                        )}
+                        {canTerminate && (i.statut === 'PLANIFIEE' || i.statut === 'EN_COURS') && (
                           <button
                             onClick={() => handleTerminer(i)}
                             className="text-green-600 hover:text-green-800 text-xs font-medium"
@@ -255,7 +316,7 @@ export default function Maintenance() {
                             Terminer
                           </button>
                         )}
-                        {(i.statut === 'PLANIFIEE' || i.statut === 'EN_COURS') && (
+                        {(i.statut === 'PLANIFIEE' || (i.statut === 'EN_COURS' && canTerminate)) && (
                           <button
                             onClick={() => handleAnnuler(i)}
                             className="text-amber-600 hover:text-amber-800 text-xs font-medium"
@@ -263,21 +324,13 @@ export default function Maintenance() {
                             Annuler
                           </button>
                         )}
-                        {i.statut !== 'EN_COURS' && (
+                        {canDelete && i.statut !== 'EN_COURS' && (
                           <button
                             onClick={() => handleDelete(i)}
                             className="text-red-500 hover:text-red-700 text-xs font-medium"
                           >
                             Supprimer
                           </button>
-                        )}
-                        {i.statut === 'EN_COURS' && (
-                          <span
-                            className="text-gray-300 text-xs font-medium cursor-not-allowed"
-                            title="Impossible de supprimer une intervention en cours — terminez-la ou annulez-la d'abord"
-                          >
-                            Supprimer
-                          </span>
                         )}
                       </div>
                     </td>
@@ -351,6 +404,21 @@ export default function Maintenance() {
                 />
               </div>
               <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Technicien assigné</label>
+                <select
+                  value={form.technicienId}
+                  onChange={(e) => setForm({ ...form, technicienId: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                >
+                  <option value="">— Aucun technicien —</option>
+                  {techniciens.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.firstName || t.lastName ? `${t.firstName ?? ''} ${t.lastName ?? ''}`.trim() : t.username}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Coût estimé (€)</label>
                 <input
                   type="number"
@@ -374,6 +442,111 @@ export default function Maintenance() {
                   className="px-4 py-2 text-sm text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50"
                 >
                   {saving ? 'Enregistrement...' : 'Créer'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
+            <div className="p-6 border-b border-gray-100">
+              <h3 className="text-lg font-semibold">Modifier l'intervention</h3>
+            </div>
+            <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
+              {actionError && (
+                <div className="bg-red-50 border border-red-100 text-red-700 text-sm px-3 py-2 rounded-lg">
+                  {actionError}
+                </div>
+              )}
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Immatriculation</label>
+                <select
+                  required
+                  value={editForm.vehiculeImmat}
+                  onChange={(e) => setEditForm({ ...editForm, vehiculeImmat: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                >
+                  <option value="">Choisir un véhicule...</option>
+                  {vehicles.map((v) => (
+                    <option key={v.id} value={v.licensePlate}>{v.licensePlate}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Type</label>
+                  <select
+                    value={editForm.type}
+                    onChange={(e) => setEditForm({ ...editForm, type: e.target.value as Intervention['type'] })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                  >
+                    {Object.entries(TYPE_LABELS).map(([v, l]) => (
+                      <option key={v} value={v}>{l}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Date planifiée</label>
+                  <input
+                    type="date"
+                    required
+                    value={editForm.datePlanifiee}
+                    onChange={(e) => setEditForm({ ...editForm, datePlanifiee: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Description</label>
+                <textarea
+                  value={editForm.description}
+                  rows={3}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Technicien assigné</label>
+                <select
+                  value={editForm.technicienId}
+                  onChange={(e) => setEditForm({ ...editForm, technicienId: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                >
+                  <option value="">— Aucun technicien —</option>
+                  {techniciens.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.firstName || t.lastName ? `${t.firstName ?? ''} ${t.lastName ?? ''}`.trim() : t.username}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Coût estimé (€)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={editForm.cout}
+                  onChange={(e) => setEditForm({ ...editForm, cout: parseFloat(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setShowEditModal(false); setEditingId(null) }}
+                  className="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="px-4 py-2 text-sm text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                >
+                  {saving ? 'Enregistrement...' : 'Enregistrer'}
                 </button>
               </div>
             </form>

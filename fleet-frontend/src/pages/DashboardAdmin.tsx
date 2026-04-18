@@ -82,6 +82,31 @@ export default function DashboardAdmin() {
         <StatCard title="Taux dispo." value={`${tauxDispo}%`} icon="📊" color="bg-teal-50" sub="objectif > 70%" />
       </div>
 
+      {/* Outils d'administration */}
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        <h3 className="text-base font-semibold text-gray-800 mb-4">Outils d'administration</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label: 'Keycloak', desc: 'Gestion des identités', icon: '🔐', url: 'http://localhost:8080', color: 'border-blue-100 hover:bg-blue-50' },
+            { label: 'Jaeger', desc: 'Traces distribuées', icon: '🔍', url: 'http://localhost:16686', color: 'border-indigo-100 hover:bg-indigo-50' },
+            { label: 'Grafana', desc: 'Métriques & logs', icon: '📊', url: 'http://localhost:3001', color: 'border-orange-100 hover:bg-orange-50' },
+            { label: 'Prometheus', desc: 'Collecte des métriques', icon: '📡', url: 'http://localhost:9090', color: 'border-red-100 hover:bg-red-50' },
+          ].map(({ label, desc, icon, url, color }) => (
+            <a
+              key={label}
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`flex flex-col items-center gap-2 p-4 bg-white border rounded-xl transition-colors shadow-sm text-center ${color}`}
+            >
+              <span className="text-2xl">{icon}</span>
+              <p className="font-semibold text-gray-900 text-sm">{label}</p>
+              <p className="text-xs text-gray-400">{desc}</p>
+            </a>
+          ))}
+        </div>
+      </div>
+
       {/* Accès rapide */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <a

@@ -28,6 +28,13 @@ export default function MesInterventions() {
   useEffect(() => { load() }, [load])
 
   function getTechnicienInfo() {
+    console.log('Token claims:', {
+      sub: keycloak.tokenParsed?.sub,
+      given_name: keycloak.tokenParsed?.given_name,
+      family_name: keycloak.tokenParsed?.family_name,
+      preferred_username: keycloak.tokenParsed?.preferred_username,
+      name: keycloak.tokenParsed?.name,
+    })
     const nom = keycloak.tokenParsed?.family_name || keycloak.tokenParsed?.preferred_username || ''
     const prenom = keycloak.tokenParsed?.given_name || ''
     return { technicienNom: nom, technicienPrenom: prenom }
