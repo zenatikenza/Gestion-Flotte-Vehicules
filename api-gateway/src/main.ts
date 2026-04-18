@@ -1,12 +1,13 @@
 import './tracing';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { HttpLoggingInterceptor } from './http-logging.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  
-  app.enableCors(); 
+  app.useGlobalInterceptors(new HttpLoggingInterceptor());
+  app.enableCors();
 
 
   const port = process.env.PORT || 3000;

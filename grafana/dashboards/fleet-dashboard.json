@@ -206,14 +206,52 @@
     },
     {
       "id": 8,
-      "title": "Logs récents (Loki)",
+      "title": "Requêtes HTTP — tous les services",
       "type": "logs",
-      "gridPos": { "x": 0, "y": 28, "w": 24, "h": 8 },
+      "gridPos": { "x": 0, "y": 28, "w": 24, "h": 10 },
+      "options": {
+        "showTime": true,
+        "showLabels": true,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "{job=~\"maintenance-service|conductor-service|localization-service|api-gateway\"} |= \"statusCode\"",
+          "legendFormat": "{{job}}"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "{job=\"vehicle-service\"} |~ \"GET|POST|PUT|DELETE\"",
+          "legendFormat": "vehicle-service"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Tous les logs des microservices",
+      "type": "logs",
+      "gridPos": { "x": 0, "y": 38, "w": 24, "h": 8 },
+      "options": {
+        "showTime": true,
+        "showLabels": true,
+        "wrapLogMessage": false,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      },
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "{job=~\".+\"}",
-          "legendFormat": ""
+          "expr": "{container=~\"gestion_flotte-(maintenance|conductor|localization|api-gateway|vehicle).*\"}",
+          "legendFormat": "{{job}}"
         }
       ]
     }

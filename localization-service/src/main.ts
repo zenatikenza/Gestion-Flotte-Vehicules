@@ -4,6 +4,7 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ValidationPipe } from '@nestjs/common';
 import { join } from 'path';
 import { AppModule } from './app.module';
+import { HttpLoggingInterceptor } from './http-logging.interceptor';
 
 async function bootstrap() {
   // ── Serveur HTTP (REST) ──────────────────────────────────────────────────
@@ -16,6 +17,7 @@ async function bootstrap() {
     }),
   );
 
+  app.useGlobalInterceptors(new HttpLoggingInterceptor());
   app.enableCors();
 
   // ── Microservice gRPC (streaming positions) ──────────────────────────────
