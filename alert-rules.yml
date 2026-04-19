@@ -1,0 +1,39 @@
+groups:
+  - name: fleet-alerts
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} DOWN"
+
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m]))
+          / sum(rate(http_requests_total[5m])) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Taux d'erreur > 5%"
+
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95,
+            rate(http_request_duration_seconds_bucket[5m])
+          ) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Latence P95 > 2s"
+
+      - alert: GeofencingAlerts
+        expr: |
+          increase(fleet_geofencing_alerts_total[5m]) > 10
+        labels:
+          severity: warning
+        annotations:
+          summary: "Trop d'alertes géofencing"

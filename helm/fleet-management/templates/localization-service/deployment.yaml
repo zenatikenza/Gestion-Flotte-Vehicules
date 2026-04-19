@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: localization-service
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "fleet-management.labels" . | nindent 4 }}
+    app: localization-service
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: localization-service
+  template:
+    metadata:
+      labels:
+        app: localization-service
+    spec:
+      containers:
+        - name: localization-service
+          image: "{{ .Values.localizationService.image }}:{{ .Values.localizationService.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.localizationService.port }}
+            - containerPort: {{ .Values.localizationService.grpcPort }}
+              name: grpc
+          envFrom:
+            - configMapRef:
+                name: localization-service-config
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

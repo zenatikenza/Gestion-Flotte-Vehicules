@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: localization-service-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "fleet-management.labels" . | nindent 4 }}
+data:
+  DB_HOST: "{{ .Values.postgresql.host }}"
+  DB_PORT: "{{ .Values.postgresql.port }}"
+  DB_NAME: "localization_db"
+  DB_USER: "postgres"
+  KAFKA_BROKERS: "{{ .Values.kafka.brokers }}"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "{{ .Values.jaeger.endpoint }}"
+  PORT: "{{ .Values.localizationService.port }}"

@@ -1,0 +1,13 @@
+apiVersion: v2
+name: fleet-management
+description: Système de gestion de flotte microservices - Master GIL Rouen
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - fleet
+  - microservices
+  - nestjs
+  - springboot
+maintainers:
+  - name: GIL Rouen

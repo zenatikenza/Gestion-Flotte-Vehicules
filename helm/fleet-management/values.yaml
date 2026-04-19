@@ -1,0 +1,72 @@
+replicaCount: 1
+
+image:
+  pullPolicy: IfNotPresent
+  registry: ""
+
+resources:
+  requests:
+    memory: 256Mi
+    cpu: 100m
+  limits:
+    memory: 512Mi
+    cpu: 500m
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 70
+
+namespace: fleet-management
+
+postgresql:
+  host: postgres
+  port: 5432
+  password: admin_password
+
+kafka:
+  brokers: kafka:9092
+
+keycloak:
+  url: http://keycloak:8080
+  realm: FleetManagement
+
+jaeger:
+  endpoint: http://jaeger:4318/v1/traces
+
+vehicleService:
+  image: fleet-management/vehicle-service
+  tag: latest
+  port: 8081
+
+conductorService:
+  image: fleet-management/conductor-service
+  tag: latest
+  port: 8082
+
+maintenanceService:
+  image: fleet-management/maintenance-service
+  tag: latest
+  port: 8083
+
+localizationService:
+  image: fleet-management/localization-service
+  tag: latest
+  port: 8084
+  grpcPort: 50051
+
+apiGateway:
+  image: fleet-management/api-gateway
+  tag: latest
+  port: 3000
+
+fleetFrontend:
+  image: fleet-management/fleet-frontend
+  tag: latest
+  port: 80
+
+ingress:
+  enabled: true
+  className: nginx
+  host: fleet.local

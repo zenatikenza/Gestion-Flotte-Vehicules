@@ -8,7 +8,7 @@ import { setContext } from '@apollo/client/link/context'
 import keycloak from './keycloak'
 
 const httpLink = createHttpLink({
-  uri: 'http://localhost:3000/graphql',
+  uri: 'http://127.0.0.1:3000/graphql',
 })
 
 const authLink = setContext(async (_, { headers }) => {

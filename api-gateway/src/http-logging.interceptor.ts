@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Observable, throwError } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
+import { trace } from '@opentelemetry/api';
 
 @Injectable()
 export class HttpLoggingInterceptor implements NestInterceptor {
@@ -15,15 +16,14 @@ export class HttpLoggingInterceptor implements NestInterceptor {
     }
     const req = context.switchToHttp().getRequest();
     const res = context.switchToHttp().getResponse();
-    const { method, url, headers } = req;
+    const { method, url } = req;
     const start = Date.now();
-
-    const traceparent = headers['traceparent'] ?? '';
-    const traceId = traceparent ? traceparent.split('-')[1] : null;
 
     return next.handle().pipe(
       tap(() => {
         const durationMs = Date.now() - start;
+        const span = trace.getActiveSpan();
+        const traceId = span?.spanContext()?.traceId ?? null;
         process.stdout.write(
           JSON.stringify({
             level: 'info',
@@ -40,6 +40,8 @@ export class HttpLoggingInterceptor implements NestInterceptor {
       catchError((err) => {
         const durationMs = Date.now() - start;
         const statusCode = err.status ?? 500;
+        const span = trace.getActiveSpan();
+        const traceId = span?.spanContext()?.traceId ?? null;
         process.stdout.write(
           JSON.stringify({
             level: 'error',

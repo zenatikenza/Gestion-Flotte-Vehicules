@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: localization-service
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "fleet-management.labels" . | nindent 4 }}
+    app: localization-service
+spec:
+  selector:
+    app: localization-service
+  ports:
+    - name: http
+      protocol: TCP
+      port: {{ .Values.localizationService.port }}
+      targetPort: {{ .Values.localizationService.port }}
+    - name: grpc
+      protocol: TCP
+      port: {{ .Values.localizationService.grpcPort }}
+      targetPort: {{ .Values.localizationService.grpcPort }}
+  type: ClusterIP

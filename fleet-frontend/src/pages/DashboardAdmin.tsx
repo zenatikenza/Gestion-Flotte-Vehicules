@@ -18,12 +18,12 @@ function StatCard({
 }
 
 const SERVICE_PORTS = [
-  { label: 'Vehicle Service', port: '8081', url: 'http://localhost:8081' },
-  { label: 'Conductor Service', port: '8082', url: 'http://localhost:8082' },
-  { label: 'Maintenance Service', port: '8083', url: 'http://localhost:8083' },
-  { label: 'Localization Service', port: '8084', url: 'http://localhost:8084' },
-  { label: 'API Gateway (GraphQL)', port: '3000', url: 'http://localhost:3000' },
-  { label: 'Keycloak', port: '8080', url: 'http://localhost:8080' },
+  { label: 'Vehicle Service', port: '8081', url: 'http://127.0.0.1:8081' },
+  { label: 'Conductor Service', port: '8082', url: 'http://127.0.0.1:8082' },
+  { label: 'Maintenance Service', port: '8083', url: 'http://127.0.0.1:8083' },
+  { label: 'Localization Service', port: '8084', url: 'http://127.0.0.1:8084' },
+  { label: 'API Gateway (GraphQL)', port: '3000', url: 'http://127.0.0.1:3000' },
+  { label: 'Keycloak', port: '8080', url: 'http://127.0.0.1:8080' },
 ]
 
 export default function DashboardAdmin() {
@@ -87,10 +87,10 @@ export default function DashboardAdmin() {
         <h3 className="text-base font-semibold text-gray-800 mb-4">Outils d'administration</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: 'Keycloak', desc: 'Gestion des identités', icon: '🔐', url: 'http://localhost:8080', color: 'border-blue-100 hover:bg-blue-50' },
-            { label: 'Jaeger', desc: 'Traces distribuées', icon: '🔍', url: 'http://localhost:16686', color: 'border-indigo-100 hover:bg-indigo-50' },
-            { label: 'Grafana', desc: 'Métriques & logs', icon: '📊', url: 'http://localhost:3001', color: 'border-orange-100 hover:bg-orange-50' },
-            { label: 'Prometheus', desc: 'Collecte des métriques', icon: '📡', url: 'http://localhost:9090', color: 'border-red-100 hover:bg-red-50' },
+            { label: 'Keycloak', desc: 'Gestion des identités', icon: '🔐', url: 'http://127.0.0.1:8080', color: 'border-blue-100 hover:bg-blue-50' },
+            { label: 'Jaeger', desc: 'Traces distribuées', icon: '🔍', url: 'http://127.0.0.1:16686', color: 'border-indigo-100 hover:bg-indigo-50' },
+            { label: 'Grafana', desc: 'Métriques & logs', icon: '📊', url: 'http://127.0.0.1:3001', color: 'border-orange-100 hover:bg-orange-50' },
+            { label: 'Prometheus', desc: 'Collecte des métriques', icon: '📡', url: 'http://127.0.0.1:9090', color: 'border-red-100 hover:bg-red-50' },
           ].map(({ label, desc, icon, url, color }) => (
             <a
               key={label}

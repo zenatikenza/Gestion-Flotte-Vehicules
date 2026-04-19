@@ -1,9 +1,9 @@
 import { getToken, getUserId } from './keycloak'
 
-const VEHICLE_URL = 'http://localhost:8081/api/vehicles'
-const CONDUCTOR_URL = 'http://localhost:8082/api/conducteurs'
-const MAINTENANCE_URL = 'http://localhost:8083/api/interventions'
-const POSITION_URL = 'http://localhost:8084/api/positions'
+const VEHICLE_URL = 'http://127.0.0.1:8081/api/vehicles'
+const CONDUCTOR_URL = 'http://127.0.0.1:8082/api/conducteurs'
+const MAINTENANCE_URL = 'http://127.0.0.1:8083/api/interventions'
+const POSITION_URL = 'http://127.0.0.1:8084/api/positions'
 
 /** Messages d'erreur lisibles par statut HTTP */
 const HTTP_ERROR_MESSAGES: Record<number, string> = {
@@ -246,7 +246,7 @@ export async function activerSimulateurGPS(vehiculeId: string) {
 // ── Admin — Keycloak via api-gateway GraphQL ─────────────────────────────────
 // Nécessite que l'api-gateway soit démarrée avec le nouveau schéma GraphQL.
 
-const GRAPHQL_URL = 'http://localhost:3000/graphql'
+const GRAPHQL_URL = 'http://127.0.0.1:3000/graphql'
 
 async function gqlFetch<T>(query: string, variables?: Record<string, unknown>): Promise<T> {
   const token = getToken()

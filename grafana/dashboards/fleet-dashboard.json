@@ -2,17 +2,95 @@
   "title": "Fleet Management - Overview",
   "uid": "fleet-overview",
   "schemaVersion": 38,
-  "version": 2,
+  "version": 4,
   "tags": ["fleet"],
   "timezone": "browser",
   "time": { "from": "now-1h", "to": "now" },
   "refresh": "30s",
   "panels": [
     {
+      "id": 10,
+      "title": "KPI — Services disponibles (%)",
+      "description": "% de microservices UP sur le total scrappé par Prometheus",
+      "type": "gauge",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 6 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "count(up == 1) / count(up) * 100",
+          "legendFormat": "Services dispo %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": 0, "color": "red" },
+              { "value": 50, "color": "orange" },
+              { "value": 80, "color": "green" }
+            ]
+          },
+          "color": { "mode": "thresholds" }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "showThresholdLabels": true, "showThresholdMarkers": true }
+    },
+    {
+      "id": 11,
+      "title": "Services UP / DOWN",
+      "type": "stat",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 6 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "up",
+          "legendFormat": "{{job}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "mappings": [{ "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }],
+          "thresholds": { "steps": [{ "value": 0, "color": "red" }, { "value": 1, "color": "green" }] },
+          "color": { "mode": "thresholds" }
+        }
+      }
+    },
+    {
+      "id": 12,
+      "title": "Activité localization-service (req/s)",
+      "description": "Requêtes HTTP traitées par le service de géolocalisation. Un pic indique une activité GPS ou géofencing élevée.",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 6 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "rate(http_server_duration_count{job=\"localization-service\"}[1m])",
+          "legendFormat": "localization req/s"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "rate(http_server_duration_count{job=\"maintenance-service\"}[1m])",
+          "legendFormat": "maintenance req/s"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "color": { "mode": "palette-classic" },
+          "custom": { "fillOpacity": 15 }
+        }
+      }
+    },
+    {
       "id": 1,
       "title": "Requêtes HTTP par service (req/s)",
       "type": "timeseries",
-      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "gridPos": { "x": 0, "y": 6, "w": 12, "h": 8 },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
@@ -46,28 +124,29 @@
     },
     {
       "id": 2,
-      "title": "Taux d'erreur 5xx par service (%)",
+      "title": "Taux d'erreur HTTP (4xx + 5xx) par service",
+      "description": "Requêtes en erreur. Affiche 0 si aucune erreur (comportement normal).",
       "type": "timeseries",
-      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "gridPos": { "x": 12, "y": 6, "w": 12, "h": 8 },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "rate(http_server_requests_seconds_count{job=\"vehicle-service\",status=~\"5..\"}[1m]) / rate(http_server_requests_seconds_count{job=\"vehicle-service\"}[1m]) * 100",
+          "expr": "(sum(rate(http_server_requests_seconds_count{job=\"vehicle-service\",status=~\"[45]..\"}[5m])) or vector(0)) / sum(rate(http_server_requests_seconds_count{job=\"vehicle-service\"}[5m])) * 100",
           "legendFormat": "vehicle-service"
         },
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "rate(http_server_duration_count{job=\"maintenance-service\",http_status_code=~\"5..\"}[1m]) / rate(http_server_duration_count{job=\"maintenance-service\"}[1m]) * 100",
+          "expr": "(sum(rate(http_server_duration_count{job=\"maintenance-service\",http_status_code=~\"[45]..\"}[5m])) or vector(0)) / sum(rate(http_server_duration_count{job=\"maintenance-service\"}[5m])) * 100",
           "legendFormat": "maintenance-service"
         },
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "rate(http_server_duration_count{job=\"conductor-service\",http_status_code=~\"5..\"}[1m]) / rate(http_server_duration_count{job=\"conductor-service\"}[1m]) * 100",
+          "expr": "(sum(rate(http_server_duration_count{job=\"conductor-service\",http_status_code=~\"[45]..\"}[5m])) or vector(0)) / sum(rate(http_server_duration_count{job=\"conductor-service\"}[5m])) * 100",
           "legendFormat": "conductor-service"
         },
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "rate(http_server_duration_count{job=\"api-gateway\",http_status_code=~\"5..\"}[1m]) / rate(http_server_duration_count{job=\"api-gateway\"}[1m]) * 100",
+          "expr": "(sum(rate(http_server_duration_count{job=\"api-gateway\",http_status_code=~\"[45]..\"}[5m])) or vector(0)) / sum(rate(http_server_duration_count{job=\"api-gateway\"}[5m])) * 100",
           "legendFormat": "api-gateway"
         }
       ],
@@ -83,7 +162,7 @@
       "id": 3,
       "title": "Latence P95 par service (ms)",
       "type": "timeseries",
-      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "gridPos": { "x": 0, "y": 14, "w": 12, "h": 8 },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
@@ -111,31 +190,56 @@
       }
     },
     {
-      "id": 4,
-      "title": "Services UP",
-      "type": "stat",
-      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 4 },
+      "id": 13,
+      "title": "Requêtes maintenance-service par code HTTP",
+      "description": "Distribution des codes de réponse HTTP du service maintenance (200=OK, 404=non trouvé, 500=erreur)",
+      "type": "piechart",
+      "gridPos": { "x": 12, "y": 14, "w": 6, "h": 8 },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "up",
-          "legendFormat": "{{job}}"
+          "expr": "sum by (http_status_code) (increase(http_server_duration_count{job=\"maintenance-service\"}[1h]))",
+          "legendFormat": "HTTP {{http_status_code}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" } }
+      },
+      "options": { "pieType": "pie", "displayLabels": ["name", "value"] }
+    },
+    {
+      "id": 14,
+      "title": "Temps de réponse moyen — maintenance-service (ms)",
+      "description": "Moyenne sur toutes les requêtes HTTP (http_server_duration_sum / count)",
+      "type": "stat",
+      "gridPos": { "x": 18, "y": 14, "w": 6, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(http_server_duration_sum{job=\"maintenance-service\"}) / sum(http_server_duration_count{job=\"maintenance-service\"})",
+          "legendFormat": "Durée moy. (ms)"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
-          "mappings": [{ "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }],
-          "thresholds": { "steps": [{ "value": 0, "color": "red" }, { "value": 1, "color": "green" }] },
-          "color": { "mode": "thresholds" }
+          "unit": "ms",
+          "color": { "fixedColor": "blue", "mode": "fixed" },
+          "thresholds": {
+            "steps": [
+              { "value": 0, "color": "green" },
+              { "value": 200, "color": "yellow" },
+              { "value": 500, "color": "red" }
+            ]
+          }
         }
-      }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } }
     },
     {
       "id": 5,
       "title": "CPU par service (%)",
       "type": "timeseries",
-      "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 },
+      "gridPos": { "x": 0, "y": 22, "w": 12, "h": 8 },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
@@ -171,7 +275,7 @@
       "id": 6,
       "title": "Mémoire JVM - vehicle-service (MB)",
       "type": "timeseries",
-      "gridPos": { "x": 12, "y": 16, "w": 12, "h": 8 },
+      "gridPos": { "x": 12, "y": 22, "w": 12, "h": 8 },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
@@ -189,26 +293,36 @@
       }
     },
     {
-      "id": 7,
-      "title": "Messages Kafka envoyés (total)",
-      "type": "stat",
-      "gridPos": { "x": 0, "y": 24, "w": 12, "h": 4 },
+      "id": 15,
+      "title": "Logs applicatifs — tous les services",
+      "description": "Tous les logs (HTTP JSON + logs NestJS + logs Spring Boot)",
+      "type": "logs",
+      "gridPos": { "x": 0, "y": 30, "w": 24, "h": 8 },
+      "options": {
+        "showTime": true,
+        "showLabels": true,
+        "showCommonLabels": false,
+        "wrapLogMessage": false,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum(kafka_producer_record_send_total)",
-          "legendFormat": "Total messages Kafka"
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "{job=~\"maintenance-service|conductor-service|localization-service|api-gateway|vehicle-service\"}",
+          "legendFormat": "{{job}}"
         }
-      ],
-      "fieldConfig": {
-        "defaults": { "unit": "short", "color": { "fixedColor": "blue", "mode": "fixed" } }
-      }
+      ]
     },
     {
       "id": 8,
-      "title": "Requêtes HTTP — tous les services",
+      "title": "Logs HTTP avec traceId (lien Jaeger)",
+      "description": "Logs JSON des requêtes HTTP — cliquer sur TraceID pour ouvrir Jaeger",
       "type": "logs",
-      "gridPos": { "x": 0, "y": 28, "w": 24, "h": 10 },
+      "gridPos": { "x": 0, "y": 38, "w": 24, "h": 10 },
       "options": {
         "showTime": true,
         "showLabels": true,
@@ -223,34 +337,7 @@
         {
           "refId": "A",
           "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "{job=~\"maintenance-service|conductor-service|localization-service|api-gateway\"} |= \"statusCode\"",
-          "legendFormat": "{{job}}"
-        },
-        {
-          "refId": "B",
-          "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "{job=\"vehicle-service\"} |~ \"GET|POST|PUT|DELETE\"",
-          "legendFormat": "vehicle-service"
-        }
-      ]
-    },
-    {
-      "id": 9,
-      "title": "Tous les logs des microservices",
-      "type": "logs",
-      "gridPos": { "x": 0, "y": 38, "w": 24, "h": 8 },
-      "options": {
-        "showTime": true,
-        "showLabels": true,
-        "wrapLogMessage": false,
-        "enableLogDetails": true,
-        "dedupStrategy": "none",
-        "sortOrder": "Descending"
-      },
-      "targets": [
-        {
-          "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "{container=~\"gestion_flotte-(maintenance|conductor|localization|api-gateway|vehicle).*\"}",
+          "expr": "{job=~\"maintenance-service|conductor-service|localization-service|api-gateway\"} |= \"traceId\"",
           "legendFormat": "{{job}}"
         }
       ]

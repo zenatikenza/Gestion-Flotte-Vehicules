@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: maintenance-service
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "fleet-management.labels" . | nindent 4 }}
+    app: maintenance-service
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: maintenance-service
+  template:
+    metadata:
+      labels:
+        app: maintenance-service
+    spec:
+      containers:
+        - name: maintenance-service
+          image: "{{ .Values.maintenanceService.image }}:{{ .Values.maintenanceService.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.maintenanceService.port }}
+          envFrom:
+            - configMapRef:
+                name: maintenance-service-config
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.maintenanceService.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 30

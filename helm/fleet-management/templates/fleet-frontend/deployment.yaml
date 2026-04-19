@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fleet-frontend
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "fleet-management.labels" . | nindent 4 }}
+    app: fleet-frontend
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: fleet-frontend
+  template:
+    metadata:
+      labels:
+        app: fleet-frontend
+    spec:
+      containers:
+        - name: fleet-frontend
+          image: "{{ .Values.fleetFrontend.image }}:{{ .Values.fleetFrontend.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.fleetFrontend.port }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.fleetFrontend.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 30

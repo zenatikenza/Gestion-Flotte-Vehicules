@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
 
 const SERVICES = [
-  { label: 'Vehicle Service', url: 'http://localhost:8081/actuator/health', port: '8081' },
-  { label: 'Conductor Service', url: 'http://localhost:8082/health', port: '8082' },
-  { label: 'Maintenance Service', url: 'http://localhost:8083/health', port: '8083' },
-  { label: 'Localization Service', url: 'http://localhost:8084/health', port: '8084' },
-  { label: 'API Gateway (GraphQL)', url: 'http://localhost:3000/health', port: '3000' },
-  { label: 'Keycloak', url: 'http://localhost:8080/health/ready', port: '8080' },
-  { label: 'Jaeger UI', url: 'http://localhost:16686/', port: '16686' },
+  { label: 'Vehicle Service', url: 'http://127.0.0.1:8081/actuator/health', port: '8081' },
+  { label: 'Conductor Service', url: 'http://127.0.0.1:8082/health', port: '8082' },
+  { label: 'Maintenance Service', url: 'http://127.0.0.1:8083/health', port: '8083' },
+  { label: 'Localization Service', url: 'http://127.0.0.1:8084/health', port: '8084' },
+  { label: 'API Gateway (GraphQL)', url: 'http://127.0.0.1:3000/health', port: '3000' },
+  { label: 'Keycloak', url: 'http://127.0.0.1:8080/health/ready', port: '8080' },
+  { label: 'Jaeger UI', url: 'http://127.0.0.1:16686/', port: '16686' },
 ]
 
 type ServiceStatus = 'checking' | 'up' | 'down'
@@ -121,7 +121,7 @@ export default function Supervision() {
         <h3 className="text-base font-semibold text-gray-800 mb-4">Outils de monitoring</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <a
-            href="http://localhost:16686"
+            href="http://127.0.0.1:16686"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-3 p-4 border border-gray-100 rounded-xl hover:bg-blue-50 transition-colors"
@@ -133,7 +133,7 @@ export default function Supervision() {
             </div>
           </a>
           <a
-            href="http://localhost:8080/admin"
+            href="http://127.0.0.1:8080/admin"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-3 p-4 border border-gray-100 rounded-xl hover:bg-blue-50 transition-colors"

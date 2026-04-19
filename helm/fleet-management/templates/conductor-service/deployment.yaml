@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: conductor-service
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "fleet-management.labels" . | nindent 4 }}
+    app: conductor-service
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: conductor-service
+  template:
+    metadata:
+      labels:
+        app: conductor-service
+    spec:
+      containers:
+        - name: conductor-service
+          image: "{{ .Values.conductorService.image }}:{{ .Values.conductorService.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.conductorService.port }}
+          envFrom:
+            - configMapRef:
+                name: conductor-service-config
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.conductorService.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 30
