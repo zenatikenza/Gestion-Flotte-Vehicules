@@ -1,0 +1,56 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "vehicles": "Vehicles",
+    "conducteurs": "Drivers",
+    "maintenance": "Maintenance",
+    "localisation": "Location",
+    "admin": "Administration",
+    "logout": "Logout",
+    "utilisateurs": "Users",
+    "supervision": "Supervision",
+    "assignations": "Assignments",
+    "statistiques": "Fleet Statistics",
+    "mesInterventions": "My Interventions",
+    "monHistorique": "My History",
+    "maLocalisation": "My Location",
+    "signaler": "Report",
+    "featureFlags": "Feature Flags"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "totalVehicles": "Total vehicles",
+    "available": "Available",
+    "inMaintenance": "In maintenance",
+    "activeConductors": "Active drivers"
+  },
+  "vehicles": {
+    "title": "Vehicle Management",
+    "add": "+ Add vehicle",
+    "search": "Search by plate...",
+    "plate": "License plate",
+    "brand": "Brand",
+    "model": "Model",
+    "mileage": "Mileage",
+    "status": "Status"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "confirm": "Confirm"
+  },
+  "status": {
+    "AVAILABLE": "Available",
+    "RESERVED": "Reserved",
+    "MAINTENANCE": "In maintenance",
+    "PLANIFIEE": "Planned",
+    "EN_COURS": "In progress",
+    "TERMINEE": "Completed",
+    "SIGNALEE": "Reported",
+    "ANNULEE": "Cancelled"
+  }
+}

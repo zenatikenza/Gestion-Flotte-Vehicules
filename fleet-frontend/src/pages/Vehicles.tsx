@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   fetchVehicles, createVehicle, updateVehicle, deleteVehicle,
   fetchInterventions, annulerIntervention,
@@ -41,7 +42,6 @@ const EMPTY_FORM = {
   status: 'AVAILABLE' as Vehicle['status'],
 }
 
-/** Dialogue de confirmation de suppression avec info sur les maintenances actives */
 function DeleteConfirmModal({
   vehicle,
   activeInterventions,
@@ -56,15 +56,20 @@ function DeleteConfirmModal({
   deleting: boolean
 }) {
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+    <div
+      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-modal-title"
+    >
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Supprimer le véhicule</h3>
+        <h3 id="delete-modal-title" className="text-lg font-semibold text-gray-900 mb-2">Supprimer le véhicule</h3>
         <p className="text-sm text-gray-600 mb-4">
           Vous allez supprimer le véhicule{' '}
           <strong>{vehicle.licensePlate} — {vehicle.brand} {vehicle.model}</strong>.
         </p>
         {activeInterventions.length > 0 && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4" role="alert">
             <p className="text-sm font-medium text-amber-800">
               ⚠️ {activeInterventions.length} intervention(s) active(s) seront automatiquement{' '}
               <strong>annulée(s)</strong> :
@@ -81,6 +86,7 @@ function DeleteConfirmModal({
         <div className="flex justify-end gap-3">
           <button
             onClick={onCancel}
+            aria-label="Annuler la suppression"
             className="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
           >
             Annuler
@@ -88,6 +94,7 @@ function DeleteConfirmModal({
           <button
             onClick={onConfirm}
             disabled={deleting}
+            aria-label={`Confirmer la suppression du véhicule ${vehicle.licensePlate}`}
             className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
           >
             {deleting ? 'Suppression...' : 'Confirmer la suppression'}
@@ -99,6 +106,7 @@ function DeleteConfirmModal({
 }
 
 export default function Vehicles() {
+  const { t } = useTranslation()
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [interventions, setInterventions] = useState<Intervention[]>([])
   const [loading, setLoading] = useState(true)
@@ -169,27 +177,22 @@ export default function Vehicles() {
     }
   }
 
-  /** Ouvre la modale de confirmation avec info sur les maintenances actives */
   function openDeleteConfirm(v: Vehicle) {
     setActionError(null)
     setDeleteTarget(v)
   }
 
-  /** Annule les maintenances actives puis supprime le véhicule */
   async function handleConfirmDelete() {
     if (!deleteTarget) return
     setDeleting(true)
     setActionError(null)
     try {
-      // 1. Annuler toutes les interventions PLANIFIEE ou EN_COURS pour ce véhicule
       const active = interventions.filter(
         (i) =>
           i.vehiculeImmat === deleteTarget.licensePlate &&
           (i.statut === 'PLANIFIEE' || i.statut === 'EN_COURS'),
       )
       await Promise.allSettled(active.map((i) => annulerIntervention(i.id)))
-
-      // 2. Supprimer le véhicule
       await deleteVehicle(deleteTarget.id)
       setDeleteTarget(null)
       await load()
@@ -212,26 +215,29 @@ export default function Vehicles() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Véhicules</h2>
+        <h2 className="text-2xl font-bold text-gray-900">{t('vehicles.title')}</h2>
         <button
           onClick={openCreate}
+          aria-label="Ajouter un nouveau véhicule"
           className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm font-medium"
         >
-          + Ajouter un véhicule
+          {t('vehicles.add')}
         </button>
       </div>
 
       {actionError && (
-        <div className="bg-red-50 border border-red-100 text-red-700 text-sm px-4 py-3 rounded-xl flex items-start gap-2">
+        <div role="alert" className="bg-red-50 border border-red-100 text-red-700 text-sm px-4 py-3 rounded-xl flex items-start gap-2">
           <span className="mt-0.5">⚠️</span>
           <span>{actionError}</span>
         </div>
       )}
 
       <div className="bg-white rounded-xl shadow-sm p-4">
+        <label htmlFor="vehicle-search" className="sr-only">{t('vehicles.search')}</label>
         <input
+          id="vehicle-search"
           type="text"
-          placeholder="Rechercher (immatriculation, marque, modèle)..."
+          placeholder={t('vehicles.search')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -240,18 +246,26 @@ export default function Vehicles() {
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         {error && (
-          <div className="p-4 bg-red-50 text-red-700 text-sm border-b border-red-100">
+          <div role="alert" className="p-4 bg-red-50 text-red-700 text-sm border-b border-red-100">
             {error} — <button onClick={load} className="underline">Réessayer</button>
           </div>
         )}
         {loading ? (
-          <div className="p-8 text-center text-gray-400">Chargement...</div>
+          <div className="p-8 text-center text-gray-400" aria-live="polite">{t('common.loading')}</div>
         ) : (
-          <table className="w-full text-sm">
+          <table role="grid" aria-label="Liste des véhicules" className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                {['Immatriculation', 'Marque', 'Modèle', 'Kilométrage', 'Statut', 'Maintenances actives', 'Actions'].map((h) => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                {[
+                  t('vehicles.plate'),
+                  t('vehicles.brand'),
+                  t('vehicles.model'),
+                  t('vehicles.mileage'),
+                  t('vehicles.status'),
+                  'Maintenances actives',
+                  'Actions',
+                ].map((h) => (
+                  <th key={h} scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                     {h}
                   </th>
                 ))}
@@ -295,15 +309,17 @@ export default function Vehicles() {
                         <div className="flex gap-2">
                           <button
                             onClick={() => openEdit(v)}
+                            aria-label={`Modifier le véhicule ${v.licensePlate}`}
                             className="text-primary-600 hover:text-primary-800 font-medium text-xs"
                           >
-                            Modifier
+                            {t('common.edit')}
                           </button>
                           <button
                             onClick={() => openDeleteConfirm(v)}
+                            aria-label={`Supprimer le véhicule ${v.licensePlate}`}
                             className="text-red-500 hover:text-red-700 font-medium text-xs"
                           >
-                            Supprimer
+                            {t('common.delete')}
                           </button>
                         </div>
                       </td>
@@ -316,25 +332,32 @@ export default function Vehicles() {
         )}
       </div>
 
-      {/* Modale création / édition */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="vehicle-modal-title"
+        >
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
             <div className="p-6 border-b border-gray-100">
-              <h3 className="text-lg font-semibold">
+              <h3 id="vehicle-modal-title" className="text-lg font-semibold">
                 {editingId !== null ? 'Modifier le véhicule' : 'Nouveau véhicule'}
               </h3>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               {actionError && (
-                <div className="bg-red-50 border border-red-100 text-red-700 text-sm px-3 py-2 rounded-lg">
+                <div role="alert" className="bg-red-50 border border-red-100 text-red-700 text-sm px-3 py-2 rounded-lg">
                   {actionError}
                 </div>
               )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Immatriculation</label>
+                  <label htmlFor="licensePlate" className="block text-xs font-medium text-gray-500 mb-1">
+                    {t('vehicles.plate')}
+                  </label>
                   <input
+                    id="licensePlate"
                     required
                     value={form.licensePlate}
                     onChange={(e) => setForm({ ...form, licensePlate: e.target.value })}
@@ -342,8 +365,11 @@ export default function Vehicles() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Marque</label>
+                  <label htmlFor="brand" className="block text-xs font-medium text-gray-500 mb-1">
+                    {t('vehicles.brand')}
+                  </label>
                   <input
+                    id="brand"
                     required
                     value={form.brand}
                     onChange={(e) => setForm({ ...form, brand: e.target.value })}
@@ -351,8 +377,11 @@ export default function Vehicles() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Modèle</label>
+                  <label htmlFor="model" className="block text-xs font-medium text-gray-500 mb-1">
+                    {t('vehicles.model')}
+                  </label>
                   <input
+                    id="model"
                     required
                     value={form.model}
                     onChange={(e) => setForm({ ...form, model: e.target.value })}
@@ -360,8 +389,11 @@ export default function Vehicles() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Kilométrage</label>
+                  <label htmlFor="mileage" className="block text-xs font-medium text-gray-500 mb-1">
+                    {t('vehicles.mileage')}
+                  </label>
                   <input
+                    id="mileage"
                     type="number"
                     required
                     min={0}
@@ -371,8 +403,11 @@ export default function Vehicles() {
                   />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Statut</label>
+                  <label htmlFor="status" className="block text-xs font-medium text-gray-500 mb-1">
+                    {t('vehicles.status')}
+                  </label>
                   <select
+                    id="status"
                     value={form.status}
                     onChange={(e) => setForm({ ...form, status: e.target.value as Vehicle['status'] })}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
@@ -387,16 +422,17 @@ export default function Vehicles() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
+                  aria-label="Fermer le formulaire"
                   className="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
                 >
-                  Annuler
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
                   className="px-4 py-2 text-sm text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50"
                 >
-                  {saving ? 'Enregistrement...' : editingId !== null ? 'Enregistrer' : 'Créer'}
+                  {saving ? 'Enregistrement...' : editingId !== null ? t('common.save') : 'Créer'}
                 </button>
               </div>
             </form>
@@ -404,7 +440,6 @@ export default function Vehicles() {
         </div>
       )}
 
-      {/* Modale confirmation suppression */}
       {deleteTarget && (
         <DeleteConfirmModal
           vehicle={deleteTarget}

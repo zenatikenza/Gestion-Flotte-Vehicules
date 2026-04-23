@@ -1,0 +1,56 @@
+{
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "vehicles": "Véhicules",
+    "conducteurs": "Conducteurs",
+    "maintenance": "Maintenance",
+    "localisation": "Localisation",
+    "admin": "Administration",
+    "logout": "Déconnexion",
+    "utilisateurs": "Utilisateurs",
+    "supervision": "Supervision",
+    "assignations": "Assignations",
+    "statistiques": "Statistiques Flotte",
+    "mesInterventions": "Mes Interventions",
+    "monHistorique": "Mon Historique",
+    "maLocalisation": "Ma Localisation",
+    "signaler": "Signaler",
+    "featureFlags": "Feature Flags"
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "totalVehicles": "Total véhicules",
+    "available": "Disponibles",
+    "inMaintenance": "En maintenance",
+    "activeConductors": "Conducteurs actifs"
+  },
+  "vehicles": {
+    "title": "Gestion des véhicules",
+    "add": "+ Ajouter un véhicule",
+    "search": "Rechercher par immatriculation...",
+    "plate": "Immatriculation",
+    "brand": "Marque",
+    "model": "Modèle",
+    "mileage": "Kilométrage",
+    "status": "Statut"
+  },
+  "common": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "loading": "Chargement...",
+    "error": "Une erreur est survenue",
+    "confirm": "Confirmer"
+  },
+  "status": {
+    "AVAILABLE": "Disponible",
+    "RESERVED": "Réservé",
+    "MAINTENANCE": "En maintenance",
+    "PLANIFIEE": "Planifiée",
+    "EN_COURS": "En cours",
+    "TERMINEE": "Terminée",
+    "SIGNALEE": "Signalée",
+    "ANNULEE": "Annulée"
+  }
+}

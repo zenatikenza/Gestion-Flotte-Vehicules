@@ -1,34 +1,35 @@
 import { NavLink } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { getUserRoles } from '../keycloak'
 
 interface NavItem { to: string; label: string; icon: string }
 
-function getNavItems(roles: string[]): NavItem[] {
+function getNavItems(roles: string[], t: (key: string) => string): NavItem[] {
   if (roles.includes('admin')) return [
-    { to: '/dashboard',    label: 'Dashboard',             icon: '📊' },
-    { to: '/utilisateurs', label: 'Utilisateurs',           icon: '👥' },
-    { to: '/vehicles',     label: 'Véhicules',              icon: '🚗' }, // Ajouté pour l'admin
-    { to: '/supervision',  label: 'Supervision',            icon: '🖥️' },
+    { to: '/dashboard',      label: t('nav.dashboard'),    icon: '📊' },
+    { to: '/utilisateurs',   label: t('nav.utilisateurs'), icon: '👥' },
+    { to: '/vehicles',       label: t('nav.vehicles'),     icon: '🚗' },
+    { to: '/supervision',    label: t('nav.supervision'),  icon: '🖥️' },
+    { to: '/feature-flags',  label: t('nav.featureFlags'), icon: '🔀' },
   ]
   if (roles.includes('manager')) return [
-    { to: '/dashboard',             label: 'Dashboard',            icon: '📊' },
-    { to: '/vehicles',              label: 'Véhicules',            icon: '🚗' }, // Ajouté ici pour le manager
-    { to: '/assignations',          label: 'Assignations',         icon: '🔗' },
-    { to: '/maintenance',           label: 'Maintenance',          icon: '🔧' },
-    { to: '/localisation',          label: 'Localisation',         icon: '🗺️' },
-    { to: '/statistiques-flotte',   label: 'Statistiques Flotte',  icon: '📈' },
+    { to: '/dashboard',           label: t('nav.dashboard'),    icon: '📊' },
+    { to: '/vehicles',            label: t('nav.vehicles'),     icon: '🚗' },
+    { to: '/assignations',        label: t('nav.assignations'), icon: '🔗' },
+    { to: '/maintenance',         label: t('nav.maintenance'),  icon: '🔧' },
+    { to: '/localisation',        label: t('nav.localisation'), icon: '🗺️' },
+    { to: '/statistiques-flotte', label: t('nav.statistiques'), icon: '📈' },
   ]
   if (roles.includes('technicien')) return [
-    { to: '/dashboard',                       label: 'Dashboard',        icon: '📊' },
-    { to: '/mes-interventions',               label: 'Mes Interventions', icon: '🔧' },
-    { to: '/mon-historique-interventions',    label: 'Mon Historique',    icon: '📋' },
+    { to: '/dashboard',                    label: t('nav.dashboard'),        icon: '📊' },
+    { to: '/mes-interventions',            label: t('nav.mesInterventions'), icon: '🔧' },
+    { to: '/mon-historique-interventions', label: t('nav.monHistorique'),    icon: '📋' },
   ]
-  // conducteur / utilisateur
   return [
-    { to: '/dashboard',       label: 'Mon Véhicule',    icon: '🚗' },
-    { to: '/ma-localisation', label: 'Ma Localisation', icon: '📍' },
-    { to: '/signaler',        label: 'Signaler',        icon: '🚨' },
-    { to: '/mon-historique',  label: 'Mon Historique',  icon: '📋' },
+    { to: '/dashboard',       label: t('nav.dashboard'),     icon: '🚗' },
+    { to: '/ma-localisation', label: t('nav.maLocalisation'), icon: '📍' },
+    { to: '/signaler',        label: t('nav.signaler'),       icon: '🚨' },
+    { to: '/mon-historique',  label: t('nav.monHistorique'),  icon: '📋' },
   ]
 }
 
@@ -40,8 +41,9 @@ function getRoleLabel(roles: string[]) {
 }
 
 export default function Sidebar() {
+  const { t } = useTranslation()
   const roles = getUserRoles()
-  const navItems = getNavItems(roles)
+  const navItems = getNavItems(roles, t)
 
   return (
     <aside className="w-64 bg-primary-900 text-white flex flex-col min-h-screen">
@@ -49,7 +51,7 @@ export default function Sidebar() {
         <h1 className="text-xl font-bold tracking-tight">🚛 Gestion Flotte</h1>
         <p className="text-primary-100 text-xs mt-1">{getRoleLabel(roles)} — M1</p>
       </div>
-      <nav className="flex-1 p-4 space-y-1">
+      <nav role="navigation" aria-label="Menu principal" className="flex-1 p-4 space-y-1">
         {navItems.map((item) => (
           <NavLink
             key={item.to}
@@ -62,8 +64,12 @@ export default function Sidebar() {
               }`
             }
           >
-            <span>{item.icon}</span>
-            <span>{item.label}</span>
+            {({ isActive }) => (
+              <>
+                <span>{item.icon}</span>
+                <span aria-current={isActive ? 'page' : undefined}>{item.label}</span>
+              </>
+            )}
           </NavLink>
         ))}
       </nav>

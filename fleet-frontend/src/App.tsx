@@ -16,6 +16,7 @@ import MaLocalisation from './pages/MaLocalisation'
 import Signalement from './pages/Signalement'
 import MonHistorique from './pages/MonHistorique'
 import AccessDenied from './pages/AccessDenied'
+import FeatureFlags from './pages/FeatureFlags'
 
 export default function App() {
   return (
@@ -39,6 +40,9 @@ export default function App() {
           />
           <Route path="/supervision"
             element={<ProtectedRoute roles={['admin']}><Supervision /></ProtectedRoute>}
+          />
+          <Route path="/feature-flags"
+            element={<ProtectedRoute roles={['admin']}><FeatureFlags /></ProtectedRoute>}
           />
 
           {/* ── Manager */}

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { fetchPositions, fetchVehicles, fetchPositionVehicule, activerSimulateurGPS } from '../api'
+import { getFlags } from '../features/featureFlags'
 import type { Position, Vehicle } from '../types'
 
 // Fix icônes Leaflet avec Vite
@@ -53,16 +54,18 @@ function FitBounds({ positions }: { positions: Position[] }) {
 }
 
 export default function Localisation() {
+  const flags = getFlags()
   const [positions, setPositions] = useState<Position[]>([])
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [gpsInitStatus, setGpsInitStatus] = useState<'idle' | 'running' | 'done'>('idle')
   const [gpsActivated, setGpsActivated] = useState(0)
+  const [geofenceAlert, setGeofenceAlert] = useState<string>('')
   const initializedRef = useRef(false)
 
-  /** Active le simulateur GPS pour tous les véhicules sans position */
   const initGPS = useCallback(async (vehicleList: Vehicle[]) => {
+    if (!flags.gpsSimulatorEnabled) return
     if (initializedRef.current || vehicleList.length === 0) return
     initializedRef.current = true
     setGpsInitStatus('running')
@@ -77,7 +80,6 @@ export default function Localisation() {
             activated++
           }
         } catch {
-          // Si erreur sur un véhicule, on active quand même le simulateur
           try { await activerSimulateurGPS(v.id.toString()) } catch { /* ignore */ }
           activated++
         }
@@ -86,36 +88,46 @@ export default function Localisation() {
 
     setGpsActivated(activated)
     setGpsInitStatus('done')
-  }, [])
+  }, [flags.gpsSimulatorEnabled])
 
   const load = useCallback(async () => {
     try {
       const [pos, veh] = await Promise.all([fetchPositions(), fetchVehicles()])
       const vehicleList: Vehicle[] = Array.isArray(veh) ? veh : []
-      setPositions(Array.isArray(pos) ? pos : [])
+      const posList: Position[] = Array.isArray(pos) ? pos : []
+      setPositions(posList)
       setVehicles(vehicleList)
       setLastUpdate(new Date())
       setError(null)
 
-      // Initialisation GPS au premier chargement
+      if (flags.geofencingAlertsEnabled) {
+        const outside = posList.filter(
+          (p) => distanceParis(p.latitude, p.longitude) > GEOFENCE_RADIUS_M,
+        )
+        if (outside.length > 0) {
+          setGeofenceAlert(`⚠️ ${outside.length} véhicule(s) hors zone géofencing`)
+        } else {
+          setGeofenceAlert('')
+        }
+      }
+
       if (!initializedRef.current) {
         await initGPS(vehicleList)
       }
     } catch (e) {
       setError(`Erreur chargement positions : ${(e as Error).message}`)
     }
-  }, [initGPS])
+  }, [initGPS, flags.geofencingAlertsEnabled])
 
-  // Premier chargement + polling 5s
   useEffect(() => {
     load()
     const interval = setInterval(load, 5000)
     return () => clearInterval(interval)
   }, [load])
 
-  const outsideCount = positions.filter(
-    (p) => distanceParis(p.latitude, p.longitude) > GEOFENCE_RADIUS_M,
-  ).length
+  const outsideCount = flags.geofencingAlertsEnabled
+    ? positions.filter((p) => distanceParis(p.latitude, p.longitude) > GEOFENCE_RADIUS_M).length
+    : 0
 
   return (
     <div className="space-y-4 h-full flex flex-col">
@@ -137,16 +149,19 @@ export default function Localisation() {
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
             {lastUpdate ? `MàJ ${lastUpdate.toLocaleTimeString('fr-FR')}` : 'Connexion...'}
           </span>
-          {outsideCount > 0 && (
-            <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">
-              ⚠️ {outsideCount} véhicule(s) hors zone
+          {flags.geofencingAlertsEnabled && outsideCount > 0 && (
+            <span
+              aria-live="polite"
+              className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium"
+            >
+              {geofenceAlert}
             </span>
           )}
         </div>
       </div>
 
       {error && (
-        <div className="bg-red-50 text-red-700 text-sm px-4 py-3 rounded-xl border border-red-100">
+        <div role="alert" className="bg-red-50 text-red-700 text-sm px-4 py-3 rounded-xl border border-red-100">
           {error}
         </div>
       )}
@@ -156,14 +171,21 @@ export default function Localisation() {
           <div className="w-3 h-3 rounded-full bg-blue-500"></div>
           <span className="text-gray-600">Dans la zone (50 km autour de Paris)</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-red-500"></div>
-          <span className="text-gray-600">Hors zone géofencing</span>
-        </div>
+        {flags.geofencingAlertsEnabled && (
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+            <span className="text-gray-600">Hors zone géofencing</span>
+          </div>
+        )}
         <div className="ml-auto text-gray-400">{positions.length} véhicule(s) tracké(s)</div>
       </div>
 
-      <div className="flex-1 bg-white rounded-xl shadow-sm overflow-hidden" style={{ minHeight: '500px' }}>
+      <div
+        role="application"
+        aria-label="Carte de localisation GPS"
+        className="flex-1 bg-white rounded-xl shadow-sm overflow-hidden"
+        style={{ minHeight: '500px' }}
+      >
         <MapContainer
           center={[PARIS.lat, PARIS.lng]}
           zoom={9}
@@ -173,19 +195,23 @@ export default function Localisation() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           />
-          <Circle
-            center={[PARIS.lat, PARIS.lng]}
-            radius={GEOFENCE_RADIUS_M}
-            pathOptions={{
-              color: '#3b82f6',
-              fillColor: '#3b82f6',
-              fillOpacity: 0.05,
-              weight: 2,
-              dashArray: '6 4',
-            }}
-          />
+          {flags.geofencingAlertsEnabled && (
+            <Circle
+              center={[PARIS.lat, PARIS.lng]}
+              radius={GEOFENCE_RADIUS_M}
+              pathOptions={{
+                color: '#3b82f6',
+                fillColor: '#3b82f6',
+                fillOpacity: 0.05,
+                weight: 2,
+                dashArray: '6 4',
+              }}
+            />
+          )}
           {positions.map((pos) => {
-            const outside = distanceParis(pos.latitude, pos.longitude) > GEOFENCE_RADIUS_M
+            const outside = flags.geofencingAlertsEnabled
+              ? distanceParis(pos.latitude, pos.longitude) > GEOFENCE_RADIUS_M
+              : false
             const vehicle = vehicles.find((v) => v.id === Number(pos.vehiculeId))
             return (
               <Marker

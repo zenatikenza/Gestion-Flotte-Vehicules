@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { fetchMesAssignations, fetchVehicle, signalerIntervention } from '../api'
+import { getFlags } from '../features/featureFlags'
 
 type Assignation = { id: string; vehiculeId: string; statut: string }
 
@@ -10,6 +11,7 @@ const TYPES_INCIDENT = [
 ]
 
 export default function Signalement() {
+  const flags = getFlags()
   const [assignation, setAssignation] = useState<Assignation | null>(null)
   const [vehiculeLabel, setVehiculeLabel] = useState<string | null>(null)
   const [licensePlate, setLicensePlate] = useState<string | null>(null)
@@ -85,6 +87,21 @@ export default function Signalement() {
   // ── Rendu ─────────────────────────────────────────────────────────────────
   if (loading) {
     return <div className="flex items-center justify-center h-64 text-gray-400">Chargement...</div>
+  }
+
+  if (!flags.maintenanceSignalEnabled) {
+    return (
+      <div className="space-y-6 max-w-2xl mx-auto">
+        <h2 className="text-2xl font-bold text-gray-900">Signaler un incident</h2>
+        <div className="bg-gray-50 border border-gray-200 rounded-xl p-8 text-center">
+          <p className="text-4xl mb-3">🔒</p>
+          <p className="text-gray-700 font-medium text-lg">Fonctionnalité désactivée</p>
+          <p className="text-gray-500 text-sm mt-2">
+            Le signalement d'incidents est temporairement désactivé par l'administrateur.
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
