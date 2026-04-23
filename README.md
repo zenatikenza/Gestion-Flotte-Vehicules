@@ -91,11 +91,3 @@ k6 run k6/load-test.js               # 10 VUs, 5 min
 k6 run k6/stress-test.js             # montée progressive 0→30 VUs
 k6 run k6/scenarios/full-workflow.js # flux complet
 ```
-
-## Documentation
-
-- [Architecture détaillée](docs/ARCHITECTURE.md)
-- [API Reference](docs/API.md)
-- [Déploiement](docs/DEPLOYMENT.md)
-- [Tests](docs/TESTING.md)
-- [Scénarios de démo](docs/DEMO.md)
